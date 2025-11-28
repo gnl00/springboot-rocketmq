@@ -1,27 +1,25 @@
 package one.demo;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.spring.autoconfigure.RocketMQProperties;
-import org.apache.rocketmq.spring.core.RocketMQTemplate;
+import org.apache.rocketmq.client.apis.ClientConfiguration;
+import org.apache.rocketmq.client.apis.ClientConfigurationBuilder;
+import org.apache.rocketmq.client.apis.ClientException;
+import org.apache.rocketmq.client.apis.ClientServiceProvider;
+import org.apache.rocketmq.client.apis.producer.Producer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @RequiredArgsConstructor
 @Configuration
 public class ProducerConfig {
-//    private final RocketMQProperties properties;
-//    @Bean
-//    public RocketMQTemplate rocketMQTemplate() {
-//        RocketMQTemplate rocketMQTemplate = new RocketMQTemplate();
-//        rocketMQTemplate.setProducer(defaultMQProducer());
-//        return rocketMQTemplate;
-//    }
-//
-//    @Bean
-//    public DefaultMQProducer defaultMQProducer() {
-//        DefaultMQProducer producer = new DefaultMQProducer(properties.getProducer().getGroup());
-//        producer.setNamesrvAddr(properties.getNameServer());
-//        return producer;
-//    }
+    @Bean
+    public Producer producer() throws ClientException {
+        ClientServiceProvider provider = ClientServiceProvider.loadService();
+        ClientConfigurationBuilder ccBuilder = ClientConfiguration.newBuilder().setEndpoints("localhost:8081");
+        ClientConfiguration configuration = ccBuilder.build();
+        return provider.newProducerBuilder()
+                .setTopics("demo")
+                .setClientConfiguration(configuration)
+                .build();
+    }
 }

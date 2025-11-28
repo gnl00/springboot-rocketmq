@@ -1,21 +1,39 @@
 # springboot-rocketmq
 
 ## run
-```shell
-docker run -d \
-  --name rocketmq-namesrv \
-  --network=host \
-  -e "ROCKETMQ_OPTS=-Drocketmq.namesrv.addr=localhost:9876" \
-  dockerpull.cn/apache/rocketmq:5.3.2 \
-  sh mqnamesrv
 
+```shell
+docker pull apache/rocketmq:5.3.2
+
+docker network create rocketmq
+
+# 启动 NameServer
+docker run -d --name rmqnamesrv -p 9876:9876 --network rocketmq apache/rocketmq:5.3.2 sh mqnamesrv
+
+# 验证 NameServer 是否启动成功
+docker logs -f rmqnamesrv
+
+# 配置 Broker 的IP地址
+echo "brokerIP1=127.0.0.1" > broker.conf
+
+# 启动 Broker 和 Proxy
 docker run -d \
-  --name rocketmq-broker \
-  --network=host \
-  -e "ROCKETMQ_OPTS=-Drocketmq.namesrv.addr=localhost:9876" \
-  dockerpull.cn/apache/rocketmq:5.3.2 \
-  sh mqbroker -n localhost:9876
+--name rmqbroker \
+--network rocketmq \
+-p 10912:10912 -p 10911:10911 -p 10909:10909 \
+-p 8080:8080 -p 8081:8081 \
+-e "NAMESRV_ADDR=rmqnamesrv:9876" \
+-v ./broker.conf:/home/rocketmq/rocketmq-5.3.2/conf/broker.conf \
+apache/rocketmq:5.3.2 sh mqbroker --enable-proxy \
+-c /home/rocketmq/rocketmq-5.3.2/conf/broker.conf
+
+# 验证 Broker 是否启动成功
+docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/proxy.log"
 ```
+
+## QuickStart
+
+> https://rocketmq.apache.org/zh/docs/quickStart/02quickstartWithDocker
 
 ## 消息积压
 
