@@ -1,0 +1,6 @@
+server:
+  port: 8100
+
+# rocketmq v4 config
+#rocketmq:
+#  name-server: localhost:9876

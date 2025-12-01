@@ -48,3 +48,12 @@ docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/p
 - 消费者本地运行配置修改，例如消费者客户端的线程数，消费并发度等;
 
 - PullConsumer 配置 `pullBatchSize` 自定义每次拉取消息的大小。需要注意：broker.conf 配置文件默认消息拉取大小为 32，所以默认拉取 32 条消息。如果设置了 pullBatchSize 未生效，则可能是 broker.conf 配置文件大小不够大，需要修改配置文件。
+
+## RocketMQMessageListener
+
+为什么 RocketMQMessageListener 只能标注在类上？而不是类似 KafkaListener 可以标注在方法上？
+
+- 设计哲学：消息监听器是一个完整的组件（Component）
+- 易于扫描和实例化： 扫描类比扫描方法更直接、更高效。当 Spring 容器启动时，它查找所有被 @RocketMQMessageListener 标记的类，将它们实例化为 Bean，并为每个 Bean 创建并配置一个 MessageListener 容器。
+- 代码一致性： 这种设计与 Spring 自身处理其他监听器的方式保持一致，例如 JMS 中的 MessageListener 接口实现，或者其他事件监听器的实现方式。
+

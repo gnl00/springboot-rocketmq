@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,6 @@ public class ProducerMain {
     public void prod(@RequestParam String topic, @RequestParam String msg) {
         AtomicInteger msgCount = new AtomicInteger();
         EXECUTOR.scheduleAtFixedRate(() -> {
-
             // 获取 OperatingSystemMXBean 实例
             OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             // 获取系统负载（最近 1 分钟的平均负载）
@@ -58,7 +58,7 @@ public class ProducerMain {
                     // 设置消息Tag，用于消费端根据指定Tag过滤消息。
                     .setTag("messageTag")
                     // 消息体。
-                    .setBody("messageBody".getBytes())
+                    .setBody(messageStr.getBytes(StandardCharsets.UTF_8))
                     .build();
             try {
                 // 发送消息，需要关注发送结果，并捕获失败等异常。

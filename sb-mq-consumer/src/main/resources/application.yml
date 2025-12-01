@@ -2,4 +2,10 @@ server:
   port: 8100
 
 rocketmq:
-  name-server: localhost:9876
+  simple-consumer:
+    endpoints: localhost:8080
+    namespace: ns-demo
+    consumer-group: demoGroup
+    topic: demo
+    tag: "*"
+    filter-expression-type: tag
