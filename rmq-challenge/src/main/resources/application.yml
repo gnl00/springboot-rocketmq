@@ -1,0 +1,11 @@
+server:
+  port: 8070
+
+rocketmq:
+  producer:
+    endpoints: localhost:8080
+    namespace: ns-demo
+    topic: demo
+    max-attempts: 3
+    request-timeout: 3
+
