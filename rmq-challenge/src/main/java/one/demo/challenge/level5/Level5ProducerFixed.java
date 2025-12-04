@@ -69,12 +69,12 @@ public class Level5ProducerFixed {
                 .setClientConfiguration(configuration)
                 .build();
 
-        log.info("Level 5 Producer (Buggy) 初始化完成");
+        log.info("Level 5 Producer (Fixed) 初始化完成");
     }
 
     /**
      * 模拟订单状态流转
-     * Bug: 使用普通消息发送，不保证顺序
+     * Fixed: 使用 MessageGroup 保证 FIFO 顺序
      *
      * @param orderId 订单ID
      */
@@ -138,7 +138,12 @@ public class Level5ProducerFixed {
 
     /**
      * 发送状态变更消息
-     * Bug: 使用普通消息，没有指定消息队列
+     * Fixed: 使用 MessageGroup 实现 FIFO 顺序
+     *
+     * 关键点：
+     * 1. setMessageGroup(orderId) - 每个订单独立的消息组
+     * 2. 同一 MessageGroup 的消息保证 FIFO 顺序
+     * 3. 不同 MessageGroup 之间可以并发处理
      */
     private void sendStatusChange(String orderId, OrderStatus status, int sequenceNo)
             throws Exception {
@@ -148,20 +153,21 @@ public class Level5ProducerFixed {
 
         ClientServiceProvider provider = ClientServiceProvider.loadService();
 
-        // Bug: 使用普通消息发送，RocketMQ 会随机选择队列
-        // 不同队列的消息由不同的消费线程处理，无法保证顺序
+        // ✅ Fixed: 使用 MessageGroup 实现 FIFO 顺序
+        // 关键：每个订单使用独立的 MessageGroup（按 orderId 分区）
+        // 效果：同一订单的消息严格 FIFO，不同订单可以并发处理
         Message message = provider.newMessageBuilder()
                 .setTopic(TOPIC)
                 .setTag("status-change")
-                .setKeys(orderId)  // 虽然设置了 Key，但不影响队列选择
-                .setMessageGroup(orderId) // 相同消息组的多条消息之间遵循先进先出的顺序关系，不同消息组、无消息组的消息之间不涉及顺序性。
+                .setKeys(orderId)
+                .setMessageGroup(orderId)  // ✅ 每个订单独立的 MessageGroup，保证订单内 FIFO，订单间并发
                 .setBody(messageBody.getBytes(StandardCharsets.UTF_8))
                 .build();
 
         SendReceipt receipt = producer.send(message);
 
-        log.info("📤 发送状态变更消息 - OrderId: {}, Status: {}, Seq: {}, MessageId: {}",
-                orderId, status.getDescription(), sequenceNo, receipt.getMessageId());
+        log.info("📤 发送状态变更消息 - OrderId: {}, Status: {}, Seq: {}, MessageGroup: {}, MessageId: {}",
+                orderId, status.getDescription(), sequenceNo, orderId, receipt.getMessageId());
     }
 
     /**
