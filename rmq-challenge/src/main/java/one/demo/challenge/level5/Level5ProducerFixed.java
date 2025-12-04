@@ -48,7 +48,7 @@ import java.util.concurrent.TimeUnit;
  */
 @Slf4j
 @RestController
-@RequestMapping("/challenge/level5")
+@RequestMapping("/challenge/level5/fixed")
 public class Level5ProducerFixed {
 
     private static final String ENDPOINTS = "localhost:8080";

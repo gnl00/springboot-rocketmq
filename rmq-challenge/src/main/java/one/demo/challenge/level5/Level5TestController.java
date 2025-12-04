@@ -7,9 +7,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Level 5 测试控制器
- */
 @Slf4j
 @RestController
 @RequestMapping("/challenge/level5")

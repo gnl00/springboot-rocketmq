@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
  * - 需要使用顺序消息和顺序消费
  */
 @Slf4j
-// @RestController
+@RestController
 @RequestMapping("/challenge/level5")
 public class Level5ProducerBuggy {
 
