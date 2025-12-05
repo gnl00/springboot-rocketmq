@@ -22,10 +22,9 @@ public class L6OrderService {
     public L6Order createOrder(L6Order l6Order) {
         log.info("💾 [DB] 创建订单 - OrderId: {}, ProductId: {}, Quantity: {}",
                 l6Order.getOrderId(), l6Order.getProductId(), l6Order.getQuantity());
-
         l6Order.setState(L6OrderState.PENDING);
+        int i = 10 / 0;
         orderDatabase.put(l6Order.getOrderId(), l6Order);
-
         return l6Order;
     }
 

@@ -1,25 +1,15 @@
 package one.demo.challenge.level6;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.client.apis.ClientConfiguration;
-import org.apache.rocketmq.client.apis.ClientException;
-import org.apache.rocketmq.client.apis.ClientServiceProvider;
 import org.apache.rocketmq.client.apis.consumer.ConsumeResult;
-import org.apache.rocketmq.client.apis.consumer.FilterExpression;
-import org.apache.rocketmq.client.apis.consumer.FilterExpressionType;
-import org.apache.rocketmq.client.apis.consumer.PushConsumer;
 import org.apache.rocketmq.client.apis.message.MessageView;
 import org.apache.rocketmq.client.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.Collections;
 
 /**
  * Level 6 消费者（Buggy 版本）
@@ -30,8 +20,8 @@ import java.util.Collections;
  */
 @Slf4j
 @Component
-@RocketMQMessageListener(topic = "order-normal-topic", tag = "*", consumerGroup = "order-consumer-group-buggy", endpoints = "localhost:8080")
-public class Level6ConsumerBuggy implements RocketMQListener {
+@RocketMQMessageListener(topic = "order-transaction-topic", tag = "*", consumerGroup = "order-consumer-group-tryfix", endpoints = "localhost:8080")
+public class Level6ConsumerTryFix implements RocketMQListener {
 
     @Autowired
     private InventoryService inventoryService;
@@ -53,19 +43,30 @@ public class Level6ConsumerBuggy implements RocketMQListener {
             // Bug: 没有检查订单是否真的存在
             L6Order l6Order = l6OrderService.getOrder(event.getOrderId());
             if (l6Order == null) {
-                log.warn("⚠️ 订单不存在，但仍然处理消息 - OrderId: {}", event.getOrderId());
                 // 继续处理，导致数据不一致
+                log.error("数据不一致，订单不存在 - OrderId: {}", event.getOrderId());
+                throw new RuntimeException("数据不一致，订单不存在");
+            }
+
+            if (l6Order.getState() == L6OrderState.CONFIRMED) {
+                log.error("数据不一致，订单已确认 - OrderId: {}", event.getOrderId());
+                return;
             }
 
             // 扣减库存
             boolean success = inventoryService.deductInventory(event.getProductId(), event.getQuantity());
             if (!success) {
                 log.error("❌ 库存扣减失败 - OrderId: {}", event.getOrderId());
-                // Bug: 库存扣减失败，但积分仍然增加
+                // 库存扣减失败
+                l6OrderService.cancelOrder(event.getOrderId());
+                return;
             }
 
             // 增加积分
             pointsService.addPoints(event.getUserId(), event.getAmount());
+
+            // 确认订单
+            l6OrderService.confirmOrder(event.getOrderId());
 
             log.info("✅ 订单事件处理完成 - OrderId: {}", event.getOrderId());
         }

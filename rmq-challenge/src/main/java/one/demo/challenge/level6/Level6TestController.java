@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.Map;
-import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -29,7 +28,7 @@ public class Level6TestController {
     private Level6ProducerBuggy level6ProducerBuggy;
 
     @Autowired(required = false)
-    private Level6ProducerFixed level6ProducerFixed;
+    private Level6ProducerTryFix level6ProducerFixed;
 
     /**
      * 创建订单（统一入口）
@@ -79,7 +78,7 @@ public class Level6TestController {
                     if (level6ProducerFixed == null) {
                         return "❌ Fixed 版本未启用，请检查配置";
                     }
-                    result = level6ProducerFixed.createOrder(userId, productId, quantity, amount);
+                    result = level6ProducerFixed.createOrderApproach(userId, productId, quantity, amount);
                     break;
 
                 default:

@@ -30,9 +30,6 @@ curl "http://localhost:8070/challenge/level6/checkAll"
 
 # 3. 模拟消息发送失败
 curl "http://localhost:8070/challenge/level6/buggy/simulateMessageFailure?userId=USER-001&productId=PRODUCT-001&quantity=5&amount=100.00"
-
-# 4. 检查数据一致性
-curl "http://localhost:8070/challenge/level6/checkAll"
 ```
 
 **预期结果：**
