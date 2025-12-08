@@ -29,6 +29,8 @@ apache/rocketmq:5.3.2 sh mqbroker --enable-proxy \
 
 # 验证 Broker 是否启动成功
 docker exec -it rmqbroker bash -c "tail -n 10 /home/rocketmq/logs/rocketmqlogs/proxy.log"
+
+docker run -d --name rocketmq-dashboard --network rocketmq -e "JAVA_OPTS=-Drocketmq.config.namesrvAddr=rmqnamesrv:9876" -p 8082:8082 -t apacherocketmq/rocketmq-dashboard:latest
 ```
 
 ## QuickStart

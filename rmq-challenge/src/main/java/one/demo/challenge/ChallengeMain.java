@@ -3,7 +3,7 @@ package one.demo.challenge;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication(scanBasePackages = "one.demo.challenge.level8")
+@SpringBootApplication(scanBasePackages = "one.demo.challenge.level10")
 public class ChallengeMain {
     public static void main(String[] args) {
         SpringApplication.run(ChallengeMain.class, args);
