@@ -85,175 +85,263 @@ public void retryDLQMessage(String messageId) {
 
 ---
 
-## Level 10: 消息轨迹与链路追踪 ⭐⭐⭐⭐
+## Level 10: 消息批量处理与流量控制 ⭐⭐⭐⭐
 
 ### 问题场景
-订单系统 → MQ → 库存系统 → MQ → 物流系统，如何追踪消息的完整链路？
+电商系统需要处理大量订单消息，为了提高性能需要实现批量处理，但当前实现存在多个问题导致性能低下、资源浪费、消息积压。
 
 ### 核心挑战
-1. TraceId 的生成和传递
-2. 消息轨迹的记录
-3. 跨系统的链路追踪
-4. 性能开销控制
+1. 消息批量处理优化
+2. 流量控制与背压机制
+3. 异常隔离与容错
+4. 线程池合理配置
 
 ### Buggy 版本问题
 ```java
-// Bug 1: TraceId 未传递
-// 生产者
-Message message = builder.setBody(body).build();
-// 没有设置 TraceId
+// Bug 1: 逐条处理消息，性能低下
+@Override
+public ConsumeResult consume(MessageView message) {
+    processOrderOneByOne(order); // 每条消息都调用一次数据库
+    return ConsumeResult.SUCCESS;
+}
 
-// 消费者
-// 无法关联上下游
+// Bug 2: 批量发送时一条失败导致整批失败
+for (int i = 0; i < count; i++) {
+    producer.send(message); // 没有异常隔离
+}
 
-// Bug 2: 消息轨迹数据丢失
-// 没有开启消息轨迹功能
+// Bug 3: 没有流量控制，高峰期 OOM
+// 无限制接收消息，内存溢出
 
-// Bug 3: 链路追踪性能开销过大
-// 每条消息都记录详细信息，导致性能下降
+// Bug 4: 线程数配置不合理
+consumptionThreadCount = 1 // CPU 利用率低
 ```
 
 ### 解决方案
 ```java
-// 1. 开启消息轨迹
-Producer producer = provider.newProducerBuilder()
-    .setClientConfiguration(configuration)
-    .enableTracing(true) // 开启消息轨迹
-    .build();
+// 1. 本地队列缓存 + 批量处理
+private final BlockingQueue<Order> orderQueue = new LinkedBlockingQueue<>(1000);
 
-// 2. TraceId 传递
-String traceId = MDC.get("traceId");
-if (traceId == null) {
-    traceId = UUID.randomUUID().toString();
+@Override
+public ConsumeResult consume(MessageView message) {
+    Order order = parse(message);
+    orderQueue.offer(order); // 放入本地队列
+
+    // 达到阈值时批量处理
+    if (orderQueue.size() >= BATCH_SIZE) {
+        processBatch();
+    }
+    return ConsumeResult.SUCCESS;
 }
 
-Message message = provider.newMessageBuilder()
-    .setTopic("order-topic")
-    .addProperty("traceId", traceId) // 传递 TraceId
-    .setBody(body)
-    .build();
-
-// 3. 消费者提取 TraceId
-String traceId = message.getProperty("traceId");
-MDC.put("traceId", traceId);
-try {
-    processMessage(message);
-} finally {
-    MDC.remove("traceId");
+private void processBatch() {
+    List<Order> batch = new ArrayList<>();
+    orderQueue.drainTo(batch, 100); // 批量取出
+    orderService.batchProcess(batch); // 批量提交数据库
 }
 
-// 4. 集成 OpenTelemetry
-Span span = tracer.spanBuilder("process-order")
-    .setSpanKind(SpanKind.CONSUMER)
-    .setAttribute("message.id", message.getMessageId())
-    .setAttribute("trace.id", traceId)
-    .startSpan();
-try (Scope scope = span.makeCurrent()) {
-    processMessage(message);
-} finally {
-    span.end();
+// 2. 异常隔离
+for (int i = 0; i < count; i++) {
+    try {
+        producer.send(message);
+        successCount++;
+    } catch (Exception e) {
+        failedCount++;
+        // 单条失败不影响其他消息
+    }
 }
+
+// 3. 流量控制
+private final Semaphore rateLimiter = new Semaphore(500);
+
+@Override
+public ConsumeResult consume(MessageView message) {
+    if (!rateLimiter.tryAcquire(100, TimeUnit.MILLISECONDS)) {
+        return ConsumeResult.FAILURE; // 触发重试
+    }
+    try {
+        processMessage(message);
+    } finally {
+        rateLimiter.release();
+    }
+}
+
+// 4. 合理配置线程数
+consumptionThreadCount = Runtime.getRuntime().availableProcessors() * 2
 ```
 
 ### 测试场景
-1. 发送消息，验证 TraceId 生成
-2. 消费消息，验证 TraceId 传递
-3. 查询消息轨迹，验证完整链路
-4. 压力测试，验证性能开销
+1. 批量发送测试，验证异常隔离
+2. 压力测试，验证流量控制
+3. 性能对比：逐条 vs 批量处理
+4. 监控 CPU、内存使用率
 
 ---
 
-## Level 11: 消息优先级与流控 ⭐⭐⭐⭐⭐
+## Level 11: 消息轨迹追踪与可观测性 ⭐⭐⭐⭐⭐
 
 ### 问题场景
-VIP 订单需要优先处理，但被大量普通订单阻塞。
+生产环境中，消息系统出现了各种问题：
+- 某些订单消息处理很慢，但不知道慢在哪里（发送慢？消费慢？业务处理慢？）
+- 消息偶尔丢失，但无法追踪消息的完整生命周期
+- 消费失败后，不知道失败原因和重试次数
+- 无法统计消息的端到端延迟
+- 出现问题时，无法快速定位是哪个环节出了问题
 
 ### 核心挑战
-1. 实现消息优先级
-2. 防止低优先级消息饿死
-3. 消费者流控
-4. 下游系统保护
+1. TraceId 的生成和传递
+2. 消息轨迹的完整记录
+3. 性能指标的采集与计算
+4. 慢消息与失败消息的追踪
+5. 可视化与监控告警
 
 ### Buggy 版本问题
 ```java
-// Bug 1: 优先级设置无效
-// RocketMQ 不直接支持消息优先级
+// Bug 1: 没有生成和传递 TraceId
+Message message = builder.setBody(body).build();
+// 无法追踪消息链路
 
-// Bug 2: 高优先级消息仍然被阻塞
-// 所有消息在同一个队列，无法区分优先级
+// Bug 2: 没有记录关键时间点
+producer.send(message);
+// 没有记录发送时间、接收时间、处理时间
 
-// Bug 3: 流控配置错误
-// 没有限制消费速率，下游系统被打垮
+// Bug 3: 没有记录性能指标
+@Override
+public ConsumeResult consume(MessageView message) {
+    processMessage(message);
+    // 没有计算延迟、耗时等指标
+}
 
-// Bug 4: 流控导致消息丢失
-// 流控拒绝消息，但没有重试机制
+// Bug 4: 没有错误追踪
+catch (Exception e) {
+    log.error("处理失败", e);
+    // 没有记录错误详情、重试次数
+}
+
+// Bug 5: 无法查询轨迹
+// 没有提供查询接口：按 TraceId、OrderId、慢消息、失败消息查询
 ```
 
 ### 解决方案
 ```java
-// 方案 1: 多队列优先级调度
-// 高优先级 Topic
-producer.send(highPriorityTopic, message);
+// 1. TraceId 生成与传递
+String traceId = UUID.randomUUID().toString();
 
-// 低优先级 Topic
-producer.send(lowPriorityTopic, message);
+Message message = provider.newMessageBuilder()
+    .setTopic("order-topic")
+    .setKeys(orderId)
+    .setBody(messageBody)
+    .build();
 
-// 消费者：优先消费高优先级队列
-@Scheduled(fixedRate = 100)
-public void consumeMessages() {
-    // 先消费高优先级
-    List<Message> highPriorityMessages = highPriorityConsumer.poll(10);
-    if (!highPriorityMessages.isEmpty()) {
-        process(highPriorityMessages);
-        return;
-    }
+// 在消息体中传递 TraceId
+OrderMessage orderMessage = new OrderMessage();
+orderMessage.setTraceId(traceId);
+orderMessage.setOrderId(orderId);
 
-    // 再消费低优先级
-    List<Message> lowPriorityMessages = lowPriorityConsumer.poll(10);
-    process(lowPriorityMessages);
-}
+// 2. 记录发送轨迹
+MessageTrace trace = new MessageTrace();
+trace.setTraceId(traceId);
+trace.setMessageId(receipt.getMessageId());
+trace.setSendTime(LocalDateTime.now());
+traceService.recordSend(trace);
 
-// 方案 2: 令牌桶流控
-public class RateLimiter {
-    private final double rate; // 每秒生成的令牌数
-    private double tokens;
-    private long lastRefillTime;
-
-    public boolean tryAcquire() {
-        refill();
-        if (tokens >= 1) {
-            tokens -= 1;
-            return true;
-        }
-        return false;
-    }
-
-    private void refill() {
-        long now = System.currentTimeMillis();
-        double elapsed = (now - lastRefillTime) / 1000.0;
-        tokens = Math.min(tokens + elapsed * rate, rate);
-        lastRefillTime = now;
-    }
-}
-
-// 使用流控
+// 3. 记录消费轨迹
 @Override
 public ConsumeResult consume(MessageView message) {
-    if (!rateLimiter.tryAcquire()) {
-        log.warn("流控限制，稍后重试");
-        return ConsumeResult.FAILURE; // 重试
+    OrderMessage order = parse(message);
+    String traceId = order.getTraceId();
+
+    // 记录消费开始
+    traceService.recordConsumeStart(traceId);
+
+    long startTime = System.currentTimeMillis();
+    try {
+        processMessage(order);
+
+        // 记录消费成功
+        long duration = System.currentTimeMillis() - startTime;
+        traceService.recordConsumeEnd(traceId, true, null, duration);
+
+        return ConsumeResult.SUCCESS;
+    } catch (Exception e) {
+        // 记录消费失败
+        long duration = System.currentTimeMillis() - startTime;
+        traceService.recordConsumeEnd(traceId, false, e.getMessage(), duration);
+
+        return ConsumeResult.FAILURE;
+    }
+}
+
+// 4. 计算性能指标
+public class MessageTrace {
+    private LocalDateTime sendTime;           // 发送时间
+    private LocalDateTime brokerReceiveTime;  // Broker 接收时间
+    private LocalDateTime consumeStartTime;   // 消费开始时间
+    private LocalDateTime consumeEndTime;     // 消费结束时间
+
+    // 计算延迟
+    public long getBrokerLatency() {
+        return Duration.between(sendTime, brokerReceiveTime).toMillis();
     }
 
-    processMessage(message);
-    return ConsumeResult.SUCCESS;
+    public long getConsumerLatency() {
+        return Duration.between(brokerReceiveTime, consumeStartTime).toMillis();
+    }
+
+    public long getProcessingTime() {
+        return Duration.between(consumeStartTime, consumeEndTime).toMillis();
+    }
+
+    public long getTotalLatency() {
+        return Duration.between(sendTime, consumeEndTime).toMillis();
+    }
+}
+
+// 5. 查询接口
+// 按 TraceId 查询
+public MessageTrace getTrace(String traceId);
+
+// 按 OrderId 查询
+public List<MessageTrace> getTracesByOrderId(String orderId);
+
+// 查询慢消息（延迟超过阈值）
+public List<MessageTrace> getSlowMessages(long thresholdMs);
+
+// 查询失败消息
+public List<MessageTrace> getFailedMessages();
+
+// 6. 统计信息
+public String getStats() {
+    return String.format("""
+        📊 消息轨迹统计
+        - 总消息数: %d
+        - 成功数: %d
+        - 失败数: %d
+        - 平均延迟: %d ms
+        - 慢消息数(>1000ms): %d
+        """, totalCount, successCount, failureCount, avgLatency, slowCount);
+}
+```
+
+### 处理模式设计
+```java
+public enum ProcessingMode {
+    FAST(50),        // 快速处理：50ms
+    NORMAL(200),     // 正常处理：200ms
+    SLOW(1000),      // 慢处理：1000ms
+    VERY_SLOW(3000), // 超慢处理：3000ms
+    RANDOM_FAIL(100); // 随机失败：50%概率
+
+    private final long processingTimeMs;
 }
 ```
 
 ### 测试场景
-1. 发送高低优先级消息，验证优先级
-2. 大量低优先级消息，验证高优先级不被阻塞
-3. 流控测试，验证消费速率限制
-4. 下游系统压力测试
+1. 发送不同模式的消息，验证轨迹记录
+2. 查询 TraceId，验证完整链路
+3. 查询慢消息，验证性能分析
+4. 查询失败消息，验证错误追踪
+5. 压力测试，验证性能开销
 
 ---
 
@@ -349,8 +437,8 @@ if (messageDeduplicationService.isDuplicate(messageId)) {
 Level 7: 延时消息 → 单一高级特性
 Level 8: 消息过滤 → 单一高级特性
 Level 9: 死信队列 → 异常处理机制
-Level 10: 链路追踪 → 可观测性
-Level 11: 优先级流控 → 性能与资源管理
+Level 10: 批量处理与流控 → 性能优化
+Level 11: 轨迹追踪与可观测性 → 监控与排查
 Level 12: 多机房容灾 → 高可用架构
 ```
 
@@ -372,8 +460,8 @@ Level 12: 多机房容灾 → 高可用架构
 └── 死信队列
 
 架构层 (Level 10-12)
-├── 链路追踪
-├── 优先级流控
+├── 批量处理与流控
+├── 轨迹追踪与可观测性
 └── 多机房容灾
 ```
 
