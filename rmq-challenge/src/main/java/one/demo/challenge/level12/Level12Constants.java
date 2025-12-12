@@ -20,6 +20,7 @@ public class Level12Constants {
     // 存储路径
     public static final String BUGGY_STORE_PATH = "store/level12/buggy";
     public static final String FIXED_STORE_PATH = "store/level12/fixed";
+    public static final String BEST_STORE_PATH = "store/level12/best";
 
     // 文件大小配置
     public static final int COMMITLOG_FILE_SIZE = 1024 * 1024 * 1024; // 1GB
