@@ -195,6 +195,7 @@ public class Level11ProducerBuggy {
                         .setTopic(Level11Constants.ORDER_TOPIC)
                         .setTag(mode.name())
                         .setKeys(orderId)
+                        .setMessageGroup("fifoGroup")
                         .addProperty("traceId", traceId)
                         .setBody(messageBody.getBytes(StandardCharsets.UTF_8))
                         .build();
