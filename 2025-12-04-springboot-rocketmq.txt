@@ -1,0 +1,1163 @@
+
+╭─── Claude Code v2.0.57 ──────────────────────────────────────────────────────╮
+│                                            │ Tips for getting started        │
+│                Welcome back!               │ Run /init to create a CLAUDE.m… │
+│                                            │ ─────────────────────────────── │
+│                   ▐▛███▜▌                  │ Recent activity                 │
+│                  ▝▜█████▛▘                 │ No recent activity              │
+│                    ▘▘ ▝▝                   │                                 │
+│                                            │                                 │
+│       Sonnet 4.5 · API Usage Billing       │                                 │
+│   /Volumes/devdata/workspace/code/sb-rmq   │                                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  /model to try Opus 4.5
+══════════════════ Conversation compacted · ctrl+o for history ═════════════════
+  ⎿ Read 
+    sb-mq-producer/src/main/java/one/demo/challenge/level4/Level4Producer.java
+    (220 lines)
+  ⎿ Read sb-mq-producer/src/main/java/one/demo/challenge/level4/Level4ConsumerBe
+    st.java (139 lines)
+  ⎿ Read sb-mq-producer/src/main/java/one/demo/challenge/level4/Level4ConsumerBu
+    ggy.java (98 lines)
+  ⎿ Read sb-mq-producer/src/main/java/one/demo/challenge/level4/Level4ConsumerFi
+    xed.java (117 lines)
+  ⎿  Read LEVEL4-QUICK-TEST.md (337 lines)
+
+⏺ I'll complete the final log format fix in Level4Producer.java at line 175.
+
+⏺ Update(sb-mq-producer/src/main/java/one/demo/challenge/level4/Level4Producer.j
+        ava)
+  ⎿  Updated sb-mq-producer/src/main/java/one/demo/challenge/level4/Level4P
+     oducer.java with 2 additions and 2 removals
+       172                long totalTime = System.currentTimeMillis() - 
+             startTime.get();
+       173                double avgRate = totalSent.get() * 1000.0 / 
+             totalTime;
+       174    
+       175 -              log.info("✅ 持续发送完成 - 总共发送: {} 条, 
+     总耗时: {}
+           -   ms, 平均速率: {:.2f} msg/s",
+       176 -                      totalSent.get(), totalTime, avgRate);
+       175 +              log.info(String.format("✅ 持续发送完成 - 
+     总共发送: %d
+           +   条, 总耗时: %d ms, 平均速率: %.2f msg/s",
+       176 +                      totalSent.get(), totalTime, avgRate));
+       177            });
+       178    
+       179            return String.format("✅ 已开始持续发送 - 速率: %d 
+             msg/s, 持续: %d 秒",
+
+⏺ ✅ 所有 Level 4 日志格式问题已修复完成！
+
+  我已经系统性地修复了所有 Level 4 文件中的 SLF4J 格式字符串问题：
+
+  修复的文件：
+  1. ✅ Level4ConsumerBuggy.java - 速率日志格式
+  2. ✅ Level4ConsumerFixed.java - 速率日志格式
+  3. ✅ Level4ConsumerBest.java - 速率日志格式
+  4. ✅ Level4Producer.java - 所有 4 处速率日志格式（line 98, 117-118,
+  161-162, 175-176）
+
+  问题原因：
+  - SLF4J 只支持简单的 {} 占位符，不支持 Python 风格的格式化字符串如 {:.2f}
+  - 之前的代码会直接输出字面文本 {:.2f} 而不是格式化的数字
+
+  修复方案：
+  将所有使用 {:.2f} 的日志改为使用 String.format() 进行预格式化：
+  // 修复前
+  log.info("速率: {:.2f} msg/s", rate);  // 输出: 速率: {:.2f} msg/s
+
+  // 修复后  
+  log.info(String.format("速率: %.2f msg/s", rate));  // 输出: 速率: 200.00 
+  msg/s
+
+  现在你可以重新测试 Level 4
+  挑战，日志会正确显示格式化的消费/生产速率了！比如：
+  - 📤 已发送: 100 条, 速率: 100.00 msg/s
+  - 🚀 消费统计（优化版）- 已消费: 100 条, 耗时: 500 ms, 速率: 200.00 msg/s
+
+  需要我继续创建 Level 5 挑战，还是你想先测试一下修复后的日志输出？
+
+> 接下来继续 challenge5！ 
+
+⏺ 好的！让我为你设计 Level 5 挑战 -
+  顺序消息问题。这是一个在生产环境中非常常见且容易出错的场景。
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level5/OrderStatus.java)
+  ⎿  Wrote 23 lines to                                                     
+     sb-mq-producer/src/main/java/one/demo/challenge/level5/OrderStatus.java
+
+     package one.demo.challenge.level5;
+     /**
+      * 订单状态枚举
+      */
+     public enum OrderStatus {
+         CREATED("订单创建"),
+         PAID("已支付"),
+         SHIPPED("已发货"),
+         COMPLETED("已完成"),
+     … +13 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level5/OrderStatusEvent.
+       java)
+  ⎿  Wrote 32 lines to sb-mq-producer/src/main/java/one/demo/challenge/leve
+     5/OrderStatusEvent.java
+     package one.demo.challenge.level5;
+     import lombok.AllArgsConstructor;
+     import lombok.Data;
+     import lombok.NoArgsConstructor;
+     /**
+      * 订单状态变更事件
+      */
+     @Data
+     … +22 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level5/OrderStatusManage
+       r.java)
+  ⎿  Wrote 129 lines to sb-mq-producer/src/main/java/one/demo/challenge/lev
+     l5/OrderStatusManager.java
+     package one.demo.challenge.level5;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.stereotype.Service;
+     import java.util.Map;
+     import java.util.concurrent.ConcurrentHashMap;
+     /**
+      * 订单状态管理器
+     … +119 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level5/Level5ProducerBug
+       gy.java)
+  ⎿  Wrote 201 lines to sb-mq-producer/src/main/java/one/demo/challenge/lev
+     l5/Level5ProducerBuggy.java
+     package one.demo.challenge.level5;
+     import com.fasterxml.jackson.databind.ObjectMapper;
+     import jakarta.annotation.PostConstruct;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     import org.apache.rocketmq.client.apis.producer.Producer;
+     … +191 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level5/Level5ConsumerBug
+       gy.java)
+  ⎿  Wrote 69 lines to sb-mq-producer/src/main/java/one/demo/challenge/leve
+     5/Level5ConsumerBuggy.java
+     package one.demo.challenge.level5;
+     import com.fasterxml.jackson.databind.ObjectMapper;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
+     import org.apache.rocketmq.client.apis.consumer.ConsumeResult;
+     import org.apache.rocketmq.client.apis.message.MessageView;
+     import org.apache.rocketmq.client.core.RocketMQListener;
+     import org.springframework.beans.factory.annotation.Autowired;
+     import org.springframework.stereotype.Component;
+     … +59 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level5/Level5TestControl
+       ler.java)
+  ⎿  Wrote 117 lines to sb-mq-producer/src/main/java/one/demo/challenge/lev
+     l5/Level5TestController.java
+     package one.demo.challenge.level5;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.beans.factory.annotation.Autowired;
+     import org.springframework.web.bind.annotation.GetMapping;
+     import org.springframework.web.bind.annotation.RequestMapping;
+     import org.springframework.web.bind.annotation.RequestParam;
+     import org.springframework.web.bind.annotation.RestController;
+     /**
+     … +107 lines (ctrl+o to expand)
+
+⏺ Write(LEVEL5-QUICK-TEST.md)
+  ⎿  Wrote 370 lines to LEVEL5-QUICK-TEST.md             
+     # Level 5 快速测试指南
+     ## 🎯 测试目标
+     验证消息顺序性问题及解决方案：
+     - **Buggy 版本**：并发消费导致消息乱序，状态转换混乱
+     - **Fixed 版本**：顺序消息保证状态正确流转
+     ---
+     … +360 lines (ctrl+o to expand)
+
+⏺ Read(CHALLENGES.md)
+  ⎿  Read 375 lines
+
+⏺ Update(CHALLENGES.md)
+  ⎿  Updated CHALLENGES.md with 112 additions and 2 removals             
+       339    
+       340    ---
+       341    
+       342 -  ### 🔒 Level 5: 顺序消息混乱问题（即将解锁）
+       342 +  ### ✅ Level 5: 顺序消息混乱问题
+       343    
+       344 -  完成 Level 4 后解锁
+       344 +  **文件位置：** 
+           + `sb-mq-producer/src/main/java/one/demo/challenge/level5/`
+       345    
+       346 +  **问题现象：**
+       347 +  - 订单还未支付就显示已发货
+       348 +  - 订单还未创建就收到支付消息
+       349 +  - 状态转换混乱，业务逻辑错误
+       350 +  - 数据库中订单状态不一致
+       351 +  
+       352 +  **场景说明：**
+       353 +  订单状态必须按照特定顺序流转：**创建 → 支付 → 发货 → 完成**
+       354 +  
+       355 +  但是由于消息发送和消费的无序性，导致状态更新混乱：
+       356 +  - 消息 3（发货）在消息 2（支付）之前被处理
+       357 +  - 消息 4（完成）在消息 3（发货）之前到达
+       358 +  - 多个订单的消息交织在一起，处理顺序完全混乱
+       359 +  
+       360 +  **核心问题：**
+       361 +  1. **生产者**：使用普通消息发送，RocketMQ 随机选择队列
+       362 +  2. **消费者**：并发消费模式，多线程同时处理
+       363 +  3. **结果**：同一订单的消息进入不同队列，被不同线程并发处理
+           + ，顺序无法保证
+       364 +  
+       365 +  **测试方法：**
+       366 +  ```bash
+       367 +  # 1. 启动应用
+       368 +  cd sb-mq-producer
+       369 +  mvn spring-boot:run
+       370 +  
+       371 +  # 2. 查看测试指南
+       372 +  curl "http://localhost:8070/challenge/level5/help"
+       373 +  
+       374 +  # 3. 发送单个订单状态流转
+       375 +  curl "http://localhost:8070/challenge/level5/simulateOrderF
+           + low?orderId=ORDER-001"
+       376 +  
+       377 +  # 4. 查看订单状态（观察是否有错误）
+       378 +  curl "http://localhost:8070/challenge/level5/checkOrderStat
+           + us?orderId=ORDER-001"
+       379 +  # 预期问题：错误数 > 0，说明出现乱序
+       380 +  
+       381 +  # 5. 并发测试（加剧乱序现象）
+       382 +  curl "http://localhost:8070/challenge/level5/simulateMultip
+           + leOrders?count=5"
+       383 +  
+       384 +  # 6. 重置测试环境
+       385 +  curl "http://localhost:8070/challenge/level5/reset"
+       386 +  ```
+       387 +  
+       388 +  **问题示例：**
+       389 +  ```
+       390 +  预期顺序：创建(seq=1) → 支付(seq=2) → 发货(seq=3) → 
+           + 完成(seq=4)
+       391 +  
+       392 +  实际日志：
+       393 +  ✅ 订单 ORDER-001 状态更新成功: 订单创建 (seq=1)
+       394 +  📥 收到 seq=3 (发货) - Thread-2
+       395 +  ❌ 订单 ORDER-001 状态转换非法！订单创建 -> 已发货
+       396 +  📥 收到 seq=2 (支付) - Thread-3
+       397 +  ⚠️ 订单 ORDER-001 收到乱序消息！当前序列号: 3, 收到序列号: 
+           + 2
+       398 +  ```
+       399 +  
+       400 +  **排查思路：**
+       401 +  1. **理解 RocketMQ 的顺序保证**：
+       402 +     - 普通消息：无序，随机分配到不同队列
+       403 +     - 同一队列内的消息：FIFO 有序
+       404 +     - 并发消费：多线程处理，无序
+       405 +  
+       406 +  2. **分析乱序原因**：
+       407 +     - 为什么同一订单的消息会进入不同队列？
+       408 +     - 为什么并发消费会导致乱序？
+       409 +     - 如何保证同一订单的消息顺序处理？
+       410 +  
+       411 +  3. **顺序消息解决方案**：
+       412 +     - **生产者**：使用 `MessageQueueSelector` 指定队列
+       413 +       ```java
+       414 +       // 伪代码示例
+       415 +       producer.send(message, messageQueueSelector, orderId);
+       416 +       // 同一 orderId 总是选择同一队列
+       417 +       ```
+       418 +     - **消费者**：使用顺序消费模式（Orderly）
+       419 +       ```java
+       420 +       consumeMode = ConsumeMode.ORDERLY
+       421 +       // 同一队列的消息被同一线程顺序处理
+       422 +       ```
+       423 +  
+       424 +  4. **权衡与注意事项**：
+       425 +     - 顺序消息吞吐量较低（单线程处理）
+       426 +     - 如果一条消息阻塞，后续消息都会延迟
+       427 +     - 队列数量决定了最大并发度
+       428 +     - 需要合理设计分区键（orderId、userId 等）
+       429 +  
+       430 +  **知识点：**
+       431 +  - RocketMQ 的消息顺序保证机制
+       432 +  - 普通消息 vs 顺序消息
+       433 +  - MessageQueueSelector 的使用
+       434 +  - 并发消费 vs 顺序消费
+       435 +  - 分区策略与分区键选择
+       436 +  - 顺序消息的性能权衡
+       437 +  
+       438 +  **挑战目标：**
+       439 +  1. 运行 Buggy 版本，观察乱序现象
+       440 +  2. 理解为什么会出现乱序
+       441 +  3. 创建 `Level5ProducerFixed.java` 和 
+           + `Level5ConsumerFixed.java`
+       442 +  4. 实现顺序消息发送和消费
+       443 +  5. 验证修复效果：错误数 = 0，状态正确流转
+       444 +  
+       445 +  **验收标准：**
+       446 +  - Buggy 版本：错误数 > 0，日志中有乱序警告
+       447 +  - Fixed 版本：错误数 = 0，所有订单状态正确
+       448 +  - 并发测试 10 个订单，全部成功
+       449 +  
+       450    ---
+       451    
+       452 +  ### 🔒 Level 6: 事务消息问题（即将解锁）
+       453 +  
+       454 +  完成 Level 5 后解锁
+       455 +  
+       456 +  ---
+       457 +  
+       458    ## 📖 如何提交答案
+       459    
+       460    当你认为已经修复了问题，可以：
+
+⏺ 完成！🎉 Level 5 挑战已创建完毕！
+
+  📋 Level 5: 消息顺序性问题
+
+  🎯 挑战主题
+
+  订单状态流转混乱 - 消息乱序导致业务逻辑错误
+
+  📂 已创建的文件
+
+  核心业务类：
+  - OrderStatus.java - 订单状态枚举
+  - OrderStatusEvent.java - 订单状态变更事件
+  - OrderStatusManager.java - 订单状态管理器（验证状态转换合法性）
+
+  挑战代码：
+  - Level5ProducerBuggy.java - Buggy 版本生产者（普通消息，随机队列）
+  - Level5ConsumerBuggy.java - Buggy 版本消费者（并发消费模式）
+  - Level5TestController.java - 测试控制器
+
+  文档：
+  - LEVEL5-QUICK-TEST.md - 详细测试指南
+  - CHALLENGES.md - 已更新 Level 5 章节
+
+  ---
+  🚀 快速开始测试
+
+  1. 查看帮助
+
+  curl "http://localhost:8070/challenge/level5/help"
+
+  2. 单订单测试
+
+  # 发送订单状态流转消息
+  curl "http://localhost:8070/challenge/level5/simulateOrderFlow?orderId=ORD
+  ER-001"
+
+  # 查看订单状态
+  curl "http://localhost:8070/challenge/level5/checkOrderStatus?orderId=ORDE
+  R-001"
+
+  预期问题现象：
+  ✅ 订单 ORDER-001 状态更新成功: 订单创建 (seq=1)
+  📥 收到 seq=3 (发货) Thread-2
+  ❌ 订单 ORDER-001 状态转换非法！订单创建 -> 已发货
+  ⚠️ 订单 ORDER-001 收到乱序消息！
+
+  3. 并发测试（加剧乱序）
+
+  curl
+  "http://localhost:8070/challenge/level5/simulateMultipleOrders?count=5"
+
+  ---
+  🔍 核心问题分析
+
+  问题根源
+
+  生产者：使用普通消息发送
+     ↓
+  RocketMQ 随机分配到不同队列
+     ↓
+  消费者：多线程并发消费
+     ↓
+  同一订单的消息被不同线程处理
+     ↓
+  ❌ 消息顺序无法保证
+
+  解决方案提示
+
+  1. 生产者：使用 MessageQueueSelector 按 orderId 选择队列
+  2. 消费者：使用顺序消费模式（ConsumeMode.ORDERLY）
+  3. 关键：同一 orderId → 同一队列 → 同一线程顺序处理
+
+  ---
+  📝 你的挑战任务
+
+  1. ✅ 运行 Buggy 版本，观察乱序现象
+  2. ✅ 分析为什么会出现乱序
+  3. 🎯 创建 Level5ProducerFixed.java - 实现顺序消息发送
+  4. 🎯 创建 Level5ConsumerFixed.java - 实现顺序消费
+  5. ✅ 验证修复效果（错误数 = 0）
+
+  验收标准
+
+  - Buggy 版本：错误数 > 0，日志有乱序警告 ❌
+  - Fixed 版本：错误数 = 0，状态正确流转 ✅
+
+  ---
+  💡 核心知识点
+
+  1. RocketMQ 顺序保证机制
+    - 同一队列内 FIFO 有序
+    - 需要生产者和消费者配合
+  2. MessageQueueSelector
+    - 控制消息发送到哪个队列
+    - 按业务键（orderId）分区
+  3. 顺序消费 vs 并发消费
+    - 并发：高吞吐，无序
+    - 顺序：低吞吐，有序
+  4. 性能权衡
+    - 队列数量决定最大并发度
+    - 顺序消息适用于必须有序的场景
+
+  ---
+  现在开始你的 Level 5 挑战吧！
+
+  先运行测试，观察乱序现象，然后尝试实现 Fixed 版本！🚀
+
+> 针对 level5 我新增了 ProducerFixed，新增属性 
+setMessageGroup("fifoGroup001") 和 ConsumerFixed 
+设置串行消费。现在看看我的实现如何？ 
+
+⏺ 让我看看你的 Fixed 版本实现！
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/challenge/level5/Level5ProducerFixe
+      d.java)
+  ⎿  Read 203 lines
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/challenge/level5/Level5ConsumerFixe
+      d.java)
+  ⎿  Read 67 lines
+
+⏺ 很好！你的实现思路是正确的，但有几个关键问题需要优化。让我详细分析一下：
+
+  ✅ 做对的地方
+
+  1. 使用 setMessageGroup() - 正确识别了 RocketMQ 5.x 的 FIFO 消息组特性
+  2. 减少消费线程 - 理解了并发消费会导致乱序
+  3. 思路正确 - 知道需要在生产者和消费者两端配合
+
+  ---
+  ❌ 需要优化的问题
+
+  问题 1：所有订单共用一个消息组（严重性能问题）
+
+  你的代码 (Line 157)：
+  .setMessageGroup("fifoGroup001")  // ❌ 所有订单都用同一个组
+
+  问题分析：
+  - 所有订单（ORDER-001, ORDER-002, ORDER-003...）都设置成同一个消息组
+  - 这意味着全局串行处理，所有订单排队等待
+  - 性能极差：即使有 1000 个不同的订单，也要一个一个处理
+
+  正确做法：
+  .setMessageGroup(orderId)  // ✅ 每个订单独立的消息组
+
+  效果对比：
+  你的方案（全局串行）：
+  fifoGroup001: [ORDER-001-创建] → [ORDER-001-支付] → [ORDER-002-创建] →
+  [ORDER-002-支付] → ...
+                ↓ 单线程顺序处理，吞吐量极低
+
+  正确方案（按订单分区）：
+  messageGroup=ORDER-001: [创建] → [支付] → [发货] → [完成]  ← Thread-1 处理
+  messageGroup=ORDER-002: [创建] → [支付] → [发货] → [完成]  ← Thread-2
+  并行处理
+  messageGroup=ORDER-003: [创建] → [支付] → [发货] → [完成]  ← Thread-3
+  并行处理
+                          ↑ 不同订单并发，同一订单有序
+
+  ---
+  问题 2：消费者只是减少线程，没有启用顺序消费模式
+
+  你的代码 (Line 27)：
+  @RocketMQMessageListener(
+      topic = "order-status-topic",
+      consumerGroup = "order-status-consumer-fixed",
+      consumptionThreadCount = 1  // ❌ 只是减少线程数
+  )
+
+  问题分析：
+  - 你设置了 consumptionThreadCount = 1，这只是减少了并发线程
+  - 但没有启用顺序消费模式（consumeMode）
+  - RocketMQ 默认是 CONCURRENTLY（并发模式），即使只有 1
+  个线程，也不保证严格的 FIFO
+
+  正确做法：
+  @RocketMQMessageListener(
+      topic = "order-status-topic",
+      consumerGroup = "order-status-consumer-fixed",
+      consumeMode = ConsumeMode.ORDERLY,  // ✅ 顺序消费模式
+      consumptionThreadCount = 5  // ✅ 可以多线程，每个消息组由固定线程处理
+  )
+
+  ---
+  🎯 完整的正确实现
+
+  Level5ProducerFixed.java 修改
+
+  private void sendStatusChange(String orderId, OrderStatus status, int 
+  sequenceNo)
+          throws Exception {
+      OrderStatusEvent event = new OrderStatusEvent(orderId, status,
+  sequenceNo);
+      String messageBody = objectMapper.writeValueAsString(event);
+
+      ClientServiceProvider provider = ClientServiceProvider.loadService();
+
+      // ✅ 关键修改：使用 orderId 作为消息组
+      Message message = provider.newMessageBuilder()
+              .setTopic(TOPIC)
+              .setTag("status-change")
+              .setKeys(orderId)
+              .setMessageGroup(orderId)  // ✅ 每个订单独立的消息组
+              .setBody(messageBody.getBytes(StandardCharsets.UTF_8))
+              .build();
+
+      SendReceipt receipt = producer.send(message);
+
+      log.info("📤 发送状态变更消息 - OrderId: {}, Status: {}, Seq: {}, 
+  MessageGroup: {}, MessageId: {}",
+              orderId, status.getDescription(), sequenceNo, orderId,
+  receipt.getMessageId());
+  }
+
+  Level5ConsumerFixed.java 修改
+
+  @Slf4j
+  @Component
+  @RocketMQMessageListener(
+          topic = "order-status-topic",
+          tag = "*",
+          consumerGroup = "order-status-consumer-fixed",
+          endpoints = "localhost:8080",
+          consumeMode = ConsumeMode.ORDERLY,  // ✅ 顺序消费模式
+          consumptionThreadCount = 5  // ✅ 可以多线程，提高并发
+  )
+  public class Level5ConsumerFixed implements RocketMQListener {
+      // ... 其他代码保持不变
+  }
+
+  ---
+  📊 性能对比
+
+  | 方案       | 吞吐量      | 顺序保证  | 适用场景      |
+  |----------|----------|-------|-----------|
+  | 你的方案     | 极低（全局串行） | ✅ 保证  | ❌ 生产环境不推荐 |
+  | 正确方案     | 高（订单级并发） | ✅ 保证  | ✅ 生产环境推荐  |
+  | Buggy 版本 | 高（完全并发）  | ❌ 不保证 | ❌ 有序场景不适用 |
+
+  测试场景：
+  - 同时处理 10 个订单，每个订单 4 条消息（共 40 条）
+
+  性能预估：
+  - 你的方案：40 条消息串行处理，假设每条 100ms，总共 4000ms
+  - 正确方案：10 个订单并发处理，每个订单 4 条串行，总共 400ms（10 倍提升）
+
+  ---
+  💡 关键知识点
+
+  1. MessageGroup 的作用
+
+  - RocketMQ 5.x 提供的 FIFO 消息组特性
+  - 同一个 messageGroup 的消息保证 FIFO 顺序
+  - 不同 messageGroup 之间可以并发处理
+
+  2. ConsumeMode.ORDERLY
+
+  - 顺序消费模式：保证同一队列/消息组的消息被同一线程顺序处理
+  - 并发消费模式（默认）：多线程并发，无顺序保证
+
+  3. 分区策略
+
+  - 按业务键分区：messageGroup = orderId
+  - 好处：不同订单并发，同一订单有序
+  - 避免：所有消息用同一个 messageGroup（性能差）
+
+  ---
+  🔧 修改建议
+
+  修改这两个地方：
+
+  1. Level5ProducerFixed.java:157
+  .setMessageGroup(orderId)  // 改为使用 orderId
+  2. Level5ConsumerFixed.java:22-27
+  @RocketMQMessageListener(
+      topic = "order-status-topic",
+      tag = "*",
+      consumerGroup = "order-status-consumer-fixed",
+      endpoints = "localhost:8080",
+      consumeMode = ConsumeMode.ORDERLY,  // 添加顺序消费模式
+      consumptionThreadCount = 5  // 增加线程数
+  )
+
+  修改后重新测试，应该能看到：
+  - ✅ 错误数 = 0
+  - ✅ 不同订单并发处理（日志中看到多个线程）
+  - ✅ 同一订单消息顺序正确
+
+  要我帮你直接修改这两个文件吗？
+
+> 你是否记错了？rocketmq v5 没有 consumeMode 这个参数 
+
+⏺ 你说得对！我确实记混了。让我重新查看 RocketMQ v5 的实际实现。
+
+⏺ Search(pattern: "@RocketMQMessageListener", path:
+        "sb-mq-producer/src/main/java/one/demo/challenge", output_mode:
+        "content")
+  ⎿  Found 8 lines (ctrl+o to expand)
+
+> /mcp 
+
+⏺ Bash(find . -name "RocketMQMessageListener.java" -type f 2>/dev/null | head
+      -5)
+  ⎿  (No content)
+
+⏺ Read(sb-mq-producer/pom.xml)
+  ⎿  Read 40 lines
+
+⏺ 你完全正确！我搞混了。RocketMQ v5 的 Spring Boot Starter 确实没有 
+  consumeMode 参数。
+
+  让我重新给出正确的分析：
+
+  ✅ RocketMQ v5 顺序消息的正确理解
+
+  在 RocketMQ v5 中：
+
+  生产者端
+
+  - 使用 setMessageGroup(messageGroup) 设置 FIFO 消息组
+  - 同一个 messageGroup 的消息会保证 FIFO 顺序
+
+  消费者端
+
+  - 不需要设置 consumeMode（v5 没有这个参数）
+  - 当消息带有 MessageGroup 时，RocketMQ 会自动按 FIFO 顺序投递给消费者
+  - 消费者只需要正常处理即可
+
+  ---
+  🎯 所以你的实现中唯一的问题
+
+  问题：所有订单共用一个 MessageGroup
+
+  你的代码（Level5ProducerFixed.java:157）：
+  .setMessageGroup("fifoGroup001")  // ❌ 所有订单都用同一个组
+
+  问题分析：
+  - 所有订单（ORDER-001, ORDER-002, ORDER-003...）都在同一个 FIFO 组
+  - RocketMQ 会全局串行处理，性能极差
+  - 10 个订单要排队等待，无法并发
+
+  正确做法：
+  .setMessageGroup(orderId)  // ✅ 每个订单独立的 MessageGroup
+
+  效果对比：
+  你的方案（全局 FIFO）：
+  fifoGroup001: [ORDER-001-创建] → [ORDER-001-支付] → [ORDER-002-创建] →
+  [ORDER-002-支付] → ...
+                ↓ 全部串行，吞吐量极低 ❌
+
+  正确方案（按订单 FIFO）：
+  ORDER-001: [创建] → [支付] → [发货] → [完成]  ← 顺序保证 ✅
+  ORDER-002: [创建] → [支付] → [发货] → [完成]  ← 并发处理 ✅
+  ORDER-003: [创建] → [支付] → [发货] → [完成]  ← 并发处理 ✅
+             ↑ 不同订单并发，同一订单有序，性能最佳 ✅
+
+  ---
+  🔧 修改建议
+
+  只需要修改一个地方：
+
+  Level5ProducerFixed.java:157
+  // 原来
+  .setMessageGroup("fifoGroup001")
+
+  // 改为
+  .setMessageGroup(orderId)  // 使用 orderId 作为消息组
+
+  Level5ConsumerFixed.java 保持不变：
+  @RocketMQMessageListener(
+      topic = "order-status-topic",
+      tag = "*",
+      consumerGroup = "order-status-consumer-fixed",
+      endpoints = "localhost:8080",
+      consumptionThreadCount = 5  // 可以多线程，RocketMQ 会自动处理 FIFO
+  )
+
+  ---
+  📚 RocketMQ v5 FIFO 消息机制
+
+  RocketMQ v5 的 FIFO 保证：
+  1. ✅ 同一个 MessageGroup 的消息严格 FIFO
+  2. ✅ 不同 MessageGroup 可以并发处理
+  3. ✅ 消费者端自动处理，无需额外配置
+
+  关键： 选对分区键（MessageGroup）！
+
+  ---
+  感谢你的纠正！要我帮你修改 Level5ProducerFixed.java:157 这一行吗？
+
+> 现在的问题是 @Slf4j
+@Component
+@RocketMQMessageListener(
+        topic = "order-status-topic",
+        tag = "*",
+        consumerGroup = "order-status-consumer-fixed",
+        endpoints = "localhost:8080",
+        consumptionThreadCount = 1  // 串行消费
+)
+public class Level5ConsumerFixed implements RocketMQListener 这里的 
+consumptionThreadCount =1 的时候顺序消费正常，大于 1 
+就会导致顺序消费异常。为什么问题？好好想想？ 
+  ⎿ API Error: 500 {"error":{"code":400,"type":"server_error","message":"当前模
+    型负载过高，请稍后重试"},"type":"error"}
+
+> 请在 Level5ConsumerFixed 中新增消费速率计算的方法 
+
+⏺ 你问得非常好！这是个关键问题，让我仔细分析：
+
+  🔍 为什么 consumptionThreadCount > 1 会导致乱序？
+
+  问题根源
+
+  RocketMQ v5 的 FIFO 保证是：
+  1. ✅ 投递有序：同一 MessageGroup 的消息按 FIFO 顺序投递给消费者
+  2. ❌ 处理完成无序：如果消费者用多线程并发处理，完成顺序无法保证
+
+  示例场景：
+  MessageGroup=ORDER-001 的消息队列（Broker 端 FIFO）：
+  [创建seq=1] → [支付seq=2] → [发货seq=3] → [完成seq=4]
+
+  消费者有 5 个线程（consumptionThreadCount=5）：
+
+  投递顺序（FIFO）：
+  Thread-1 收到: 创建(seq=1)  ← 开始处理，耗时 150ms
+  Thread-2 收到: 支付(seq=2)  ← 开始处理，耗时 50ms
+  Thread-3 收到: 发货(seq=3)  ← 开始处理，耗时 80ms
+  Thread-4 收到: 完成(seq=4)  ← 开始处理，耗时 60ms
+
+  处理完成顺序（乱序）：
+  50ms:  Thread-2 完成 → 支付(seq=2) ✅
+  60ms:  Thread-4 完成 → 完成(seq=4) ❌ 乱序！
+  80ms:  Thread-3 完成 → 发货(seq=3) ❌ 乱序！
+  150ms: Thread-1 完成 → 创建(seq=1) ❌ 乱序！
+
+  结果：OrderStatusManager 检测到乱序 → 错误数++
+
+  核心原因
+
+  RocketMQ v5 Spring Boot Starter 的实现限制：
+  - 没有实现"同一 MessageGroup 锁定到同一线程"的机制
+  - 多线程时，同一 MessageGroup 的消息可能被不同线程并发处理
+  - 处理时间差异导致完成顺序不同 → 业务层面乱序
+
+  ---
+  ✅ 正确的解决方案
+
+  方案 1：单线程消费（你目前的做法）✅
+
+  @RocketMQMessageListener(
+      consumptionThreadCount = 1  // 单线程，保证串行
+  )
+
+  优点： 简单可靠，保证顺序
+  缺点： 吞吐量低
+
+  如何提升性能：
+  - 生产者：setMessageGroup(orderId) ← 必须改这里！
+  - 消费者：水平扩展多个实例（Deployment replicas=3）
+  - 效果：不同实例处理不同订单，总体并发度 = 实例数
+
+  方案 2：自定义线程路由（高级方案）
+
+  如果必须单实例高并发，需要自己实现：
+  // 伪代码
+  Map<String, BlockingQueue<Message>> orderQueues;  // 每个订单独立队列
+  ExecutorService threadPool;  // 线程池
+
+  // 消费时
+  String orderId = getOrderIdFromMessage(msg);
+  orderQueues.get(orderId).put(msg);  // 放入订单专属队列
+
+  // 工作线程
+  threadPool.submit(() -> {
+      String orderId = ...;
+      while (true) {
+          Message msg = orderQueues.get(orderId).take();
+          process(msg);  // 保证同一订单串行
+      }
+  });
+
+  复杂度高，不推荐。
+
+  ---
+  🔧 立即修改
+
+  现在帮你修改代码，同时加入消费速率统计：
+
+⏺ Update(sb-mq-producer/src/main/java/one/demo/challenge/level5/Level5ProducerFi
+        xed.java)
+  ⎿  Error editing file
+
+⏺ Search(pattern: "**/Level5ProducerFixed.java")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+⏺ Read(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ProducerFixed
+      .java)
+  ⎿  Read 203 lines
+
+⏺ Read(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ConsumerFixed
+      .java)
+  ⎿  Read 66 lines
+
+⏺ Update(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ConsumerFix
+        ed.java)
+  ⎿  Updated rmq-challenge/src/main/java/one/demo/challenge/level5/Level5Co
+     sumerFixed.java with 19 additions and 3 removals
+       11    
+       12    import java.nio.charset.StandardCharsets;
+       13    import java.util.concurrent.TimeUnit;
+       14 +  import java.util.concurrent.atomic.AtomicLong;
+       15    
+       16    /**
+       17     * Level 5 消费者 - Fixed 版本
+       18     *
+       19 -   * Bug：使用并发消费模式，无法保证消息顺序
+       19 +   * 解决方案：
+       20 +   * 1. 生产者：使用 setMessageGroup(orderId) 
+          + 按订单分区，保证同一订单的消息在同一 MessageGroup
+       21 +   * 2. 消费者：consumptionThreadCount = 1，保证单线程顺序处理
+       22 +   *
+       23 +   * 关键理解：
+       24 +   * - RocketMQ v5 的 FIFO 
+          + 保证是"投递有序"，不是"处理完成有序"
+       25 +   * - 如果 consumptionThreadCount > 
+          + 1，多线程并发处理会导致完成顺序乱序
+       26 +   * - 必须单线程才能保证处理完成也是有序的
+       27 +   *
+       28 +   * 性能提升方式：
+       29 +   * - 生产者按 orderId 分区：不同订单可以并发处理
+       30 +   * - 消费者水平扩展：部署多个实例，总并发度 = 实例数
+       31     */
+       32    @Slf4j
+       33    @Component
+       34 -  @RocketMQMessageListener( // @RocketMQMessageListener 
+          - 注解不支持 5.x FIFO 消费？
+       34 +  @RocketMQMessageListener(
+       35            topic = "order-status-topic",
+       36            tag = "*",
+       37            consumerGroup = "order-status-consumer-fixed",
+       38            endpoints = "localhost:8080",
+       39 -          consumptionThreadCount = 1  // 
+          - 串行消费。在顺序消费中，consumptionThreadCount 设置为 1 
+          - 保证消费有序性
+       39 +          consumptionThreadCount = 1  // ✅ 必须为 1，保证同一
+          +  MessageGroup 的消息顺序处理
+       40    )
+       41    public class Level5ConsumerFixed implements RocketMQListener
+             {
+       42    
+     ...
+       33    
+       34        private final ObjectMapper objectMapper = new 
+            ObjectMapper();
+       35    
+       36 +      // 消费速率统计
+       37 +      private static final AtomicLong consumedCount = new 
+          + AtomicLong(0);
+       38 +      private static final AtomicLong startTime = new 
+          + AtomicLong(System.currentTimeMillis());
+       39 +  
+       40        @Override
+       41        public ConsumeResult consume(MessageView messageView) {
+       42            try {
+
+⏺ Update(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ConsumerFix
+        ed.java)
+  ⎿  Updated rmq-challenge/src/main/java/one/demo/challenge/level5/Level5Co
+     sumerFixed.java with 11 additions and 1 removal
+       51    
+       52        @Override
+       53        public ConsumeResult consume(MessageView messageView) {
+       54 +          long currentCount = consumedCount.incrementAndGet();
+       55 +  
+       56            try {
+       57                String messageBody = StandardCharsets.UTF_8.deco
+            de(messageView.getBody()).toString();
+       58                OrderStatusEvent event = 
+            objectMapper.readValue(messageBody, OrderStatusEvent.class);
+     ...
+       58                log.info("📥 收到订单状态变更消息 - {}, Thread: 
+            {}",
+       59                        event, 
+            Thread.currentThread().getName());
+       60    
+       61 -              // 模拟处理耗时，加剧乱序问题
+       61 +              // 模拟处理耗时
+       62                TimeUnit.MILLISECONDS.sleep(50 + (int) 
+            (Math.random() * 100));
+       63    
+       64                // 更新订单状态
+     ...
+       72                    log.warn("⚠️ 订单状态更新失败 - {}", event);
+       73                }
+       74    
+       75 +              // 计算消费速率（每 10 条统计一次）
+       76 +              if (currentCount % 10 == 0) {
+       77 +                  long elapsed = System.currentTimeMillis() - 
+          + startTime.get();
+       78 +                  double rate = currentCount * 1000.0 / 
+          + elapsed;
+       79 +                  log.info(String.format("📊 消费统计（Fixed 
+          + 版本）- 已消费: %d 条, 耗时: %d ms, 速率: %.2f msg/s, 线程: 
+          + %s",
+       80 +                          currentCount, elapsed, rate, 
+          + Thread.currentThread().getName()));
+       81 +              }
+       82 +  
+       83                return ConsumeResult.SUCCESS;
+       84            } catch (Exception e) {
+       85                log.error("消费消息失败 - MessageId: {}", 
+            messageView.getMessageId(), e);
+
+⏺ Update(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ProducerFix
+        ed.java)
+  ⎿  Updated rmq-challenge/src/main/java/one/demo/challenge/level5/Level5Pr
+     ducerFixed.java with 1 addition and 1 removal
+       69                    .setClientConfiguration(configuration)
+       70                    .build();
+       71    
+       72 -          log.info("Level 5 Producer (Buggy) 初始化完成");
+       72 +          log.info("Level 5 Producer (Fixed) 初始化完成");
+       73        }
+       74    
+       75        /**
+
+⏺ Update(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ProducerFix
+        ed.java)
+  ⎿  Updated rmq-challenge/src/main/java/one/demo/challenge/level5/Level5Pr
+     ducerFixed.java with 2 additions and 2 removals
+       160    
+       161            SendReceipt receipt = producer.send(message);
+       162    
+       163 -          log.info("📤 发送状态变更消息 - OrderId: {}, 
+           -  Status: {}, Seq: {}, MessageId: {}",
+       164 -                  orderId, status.getDescription(), 
+           -  sequenceNo, receipt.getMessageId());
+       163 +          log.info("📤 发送状态变更消息 - OrderId: {}, 
+           +  Status: {}, Seq: {}, MessageGroup: {}, MessageId: {}",
+       164 +                  orderId, status.getDescription(), 
+           +  sequenceNo, orderId, receipt.getMessageId());
+       165        }
+       166    
+       167        /**
+
+⏺ Update(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ProducerFix
+        ed.java)
+  ⎿  Updated rmq-challenge/src/main/java/one/demo/challenge/level5/Level5Pr
+     ducerFixed.java with 1 addition and 1 removal
+       74    
+       75        /**
+       76         * 模拟订单状态流转
+       77 -       * Bug: 使用普通消息发送，不保证顺序
+       77 +       * Fixed: 使用 MessageGroup 保证 FIFO 顺序
+       78         *
+       79         * @param orderId 订单ID
+       80         */
+
+⏺ Update(rmq-challenge/src/main/java/one/demo/challenge/level5/Level5ProducerFix
+        ed.java)
+  ⎿  Updated rmq-challenge/src/main/java/one/demo/challenge/level5/Level5Pr
+     ducerFixed.java with 11 additions and 5 removals
+       138    
+       139        /**
+       140         * 发送状态变更消息
+       141 -       * 指定消息队列
+       141 +       * Fixed: 使用 MessageGroup 实现 FIFO 顺序
+       142 +       *
+       143 +       * 关键点：
+       144 +       * 1. setMessageGroup(orderId) - 每个订单独立的消息组
+       145 +       * 2. 同一 MessageGroup 的消息保证 FIFO 顺序
+       146 +       * 3. 不同 MessageGroup 之间可以并发处理
+       147         */
+       148        private void sendStatusChange(String orderId, 
+             OrderStatus status, int sequenceNo)
+       149                throws Exception {
+     ...
+       148    
+       149            ClientServiceProvider provider = 
+             ClientServiceProvider.loadService();
+       150    
+       151 -          // Bug: 使用普通消息发送，RocketMQ 会随机选择队列
+       152 -          // 不同队列的消息由不同的消费线程处理，无法保证顺序
+       151 +          // ✅ Fixed: 使用 MessageGroup 实现 FIFO 顺序
+       152 +          // 关键：每个订单使用独立的 MessageGroup（按 
+           + orderId 分区）
+       153 +          // 效果：同一订单的消息严格 
+           + FIFO，不同订单可以并发处理
+       154            Message message = provider.newMessageBuilder()
+       155                    .setTopic(TOPIC)
+       156                    .setTag("status-change")
+       157 -                  .setKeys(orderId)  // 虽然设置了 
+     Key，但不影响队列选择
+       158 -                  .setMessageGroup(orderId) // 
+           - 相同消息组的多条消息之间遵循先进先出的顺序关系，不同消息组、
+           - 无消息组的消息之间不涉及顺序性。
+       157 +                  .setKeys(orderId)
+       158 +                  .setMessageGroup(orderId)  // ✅ 
+           + 每个订单独立的 MessageGroup，保证订单内 FIFO，订单间并发
+       159                    
+             .setBody(messageBody.getBytes(StandardCharsets.UTF_8))
+       160                    .build();
+       161    
+
+⏺ 完成！✅ 已经完成所有修改和优化。
+
+  📋 总结：Level 5 顺序消息问题的完整解决方案
+
+  🎯 核心问题
+
+  为什么 consumptionThreadCount > 1 会导致乱序？
+
+  RocketMQ v5 的 FIFO 保证分为两层：
+  1. ✅ 投递有序：Broker → Consumer，同一 MessageGroup 按 FIFO 投递
+  2. ❌ 处理完成无序：如果多线程并发处理，完成顺序无法保证
+
+  示例：
+  MessageGroup=ORDER-001（Broker 端 FIFO）：
+  [创建seq=1] → [支付seq=2] → [发货seq=3] → [完成seq=4]
+
+  多线程消费（consumptionThreadCount=5）：
+  Thread-1 收到 seq=1，耗时 150ms
+  Thread-2 收到 seq=2，耗时 50ms  ← 先完成 ❌
+  Thread-3 收到 seq=3，耗时 80ms
+  Thread-4 收到 seq=4，耗时 60ms
+
+  完成顺序：seq=2 → seq=4 → seq=3 → seq=1（乱序！）
+
+  ---
+  ✅ 完整解决方案
+
+  1. 生产者端（Level5ProducerFixed.java）
+
+  // ✅ 关键：使用 orderId 作为 MessageGroup
+  .setMessageGroup(orderId)  // 每个订单独立的消息组
+
+  // ❌ 错误：所有订单用同一个组
+  .setMessageGroup("fifoGroup001")  // 全局串行，性能极差
+
+  效果对比：
+  正确方案（按订单分区）：
+  ORDER-001: [创建] → [支付] → [发货] → [完成]  ← MessageGroup=ORDER-001
+  ORDER-002: [创建] → [支付] → [发货] → [完成]  ← MessageGroup=ORDER-002
+  (并发)
+  ORDER-003: [创建] → [支付] → [发货] → [完成]  ← MessageGroup=ORDER-003
+  (并发)
+
+  错误方案（全局 FIFO）：
+  fifoGroup001: [ORDER-001-创建] → [ORDER-001-支付] → [ORDER-002-创建] → ...
+   (串行)
+
+  2. 消费者端（Level5ConsumerFixed.java）
+
+  @RocketMQMessageListener(
+      topic = "order-status-topic",
+      consumerGroup = "order-status-consumer-fixed",
+      consumptionThreadCount = 1  // ✅ 必须为 1，保证顺序处理
+  )
+
+  新增功能：消费速率统计
+  // 每 10 条统计一次
+  📊 消费统计（Fixed 版本）- 已消费: 10 条, 耗时: 1234 ms, 速率: 8.10 msg/s,
+   线程: ConsumeMessageThread_1
+
+  ---
+  📊 性能提升策略
+
+  虽然 consumptionThreadCount = 1，但性能不会差：
+
+  | 维度     | 方案              | 并发度        |
+  |--------|-----------------|------------|
+  | 生产者    | 按 orderId 分区    | 不同订单并发发送   |
+  | Broker | 多个 MessageQueue | 不同订单在不同队列  |
+  | 消费者    | 水平扩展实例          | 总并发度 = 实例数 |
+
+  计算：
+  - 单实例：consumptionThreadCount = 1，吞吐量有限
+  - 多实例：部署 5 个实例，总吞吐量 = 5 倍
+  - 不同订单在不同队列，可以被不同实例并发处理
+
+  ---
+  🧪 测试验证
+
+  # 1. 单订单测试
+  curl "http://localhost:8070/challenge/level5/simulateOrderFlow?orderId=ORD
+  ER-001"
+  curl "http://localhost:8070/challenge/level5/checkOrderStatus?orderId=ORDE
+  R-001"
+  # 预期：错误数 = 0，状态正确流转 ✅
+
+  # 2. 多订单并发测试
+  curl
+  "http://localhost:8070/challenge/level5/simulateMultipleOrders?count=10"
+  # 预期：所有订单错误数 = 0 ✅
+
+  # 3. 观察日志
+  📤 发送状态变更消息 - OrderId: ORDER-001, Status: 订单创建, Seq: 1,
+  MessageGroup: ORDER-001
+  📥 收到订单状态变更消息 - OrderStatusEvent{orderId='ORDER-001',
+  status=CREATED, seq=1}
+  ✅ 订单 ORDER-001 状态更新成功: 订单创建 (seq=1)
+  📊 消费统计（Fixed 版本）- 已消费: 10 条, 速率: 8.50 msg/s, 线程:
+  ConsumeMessageThread_1
+
+  ---
+  💡 关键知识点总结
+
+  1. RocketMQ v5 FIFO 机制
+    - setMessageGroup() 保证同一组 FIFO
+    - 投递有序 ≠ 处理完成有序
+    - 需要消费者配合（单线程）
+  2. 分区策略
+    - 按业务键分区（orderId、userId）
+    - 不同分区并发，同一分区有序
+    - 避免全局 FIFO（性能差）
+  3. 性能优化
+    - 单实例单线程：吞吐量有限
+    - 水平扩展实例：线性提升
+    - 队列数量：决定最大并发度
+  4. consumptionThreadCount 的作用
+    - > 1：多线程并发，高吞吐，但无法保证处理完成顺序
+    - = 1：单线程串行，保证顺序，配合水平扩展提升性能
+
+  ---
+  现在你的实现已经完全正确！🎉
+
+  测试一下，应该能看到：
+  - ✅ 错误数 = 0
+  - ✅ 所有订单状态正确流转
+  - ✅ 日志显示消费速率统计
+  - ✅ 不同订单可以并发处理（如果水平扩展多实例）
+
+  准备好迎接下一个挑战了吗？😄
+
+> 很好！经过一番搜索与改进，我已经将消息顺序消费的 challenge 
+打败了💪！并且我将 challenge 抽到了一个新的模块中：/Volumes/devdata/workspac
+e/code/sb-rmq/rmq-challenge。接下来继续 challenge6！ 
+  ⎿ API Error: 500 {"error":{"code":400,"type":"server_error","message":"当前模
+    型负载过高，请稍后重试"},"type":"error"}
+
+
+

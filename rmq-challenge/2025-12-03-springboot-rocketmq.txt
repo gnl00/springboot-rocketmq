@@ -1,0 +1,1663 @@
+
+╭─── Claude Code v2.0.57 ──────────────────────────────────────────────────────╮
+│                                            │ Tips for getting started        │
+│                Welcome back!               │ Run /init to create a CLAUDE.m… │
+│                                            │ ─────────────────────────────── │
+│                   ▐▛███▜▌                  │ Recent activity                 │
+│                  ▝▜█████▛▘                 │ No recent activity              │
+│                    ▘▘ ▝▝                   │                                 │
+│                                            │                                 │
+│       Sonnet 4.5 · API Usage Billing       │                                 │
+│   /Volumes/devdata/workspace/code/sb-rmq   │                                 │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  /model to try Opus 4.5
+
+> 这是一个 springboot + rocketmq 
+项目。为了增强与锻炼自己的开发技巧，与问题排查能力。请基于当前项目，针对 
+rocketmq 在生产中可能出现的问题编写对应的代码，让我来尝试解决。换句话说，你
+作为一个出题者，我作为一个答题者。让我们由浅到深，一个一个来。开始吧 
+
+⏺ 很好的学习思路！让我先了解一下你的项目结构，然后为你设计一系列由浅到深的
+  RocketMQ 生产问题场景。
+
+⏺ Search(pattern: "**/*.{java,yml,yaml,properties,xml}")
+  ⎿  Found 37 files (ctrl+o to expand)
+
+⏺ Read(README.md)
+  ⎿  Read 60 lines
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/ProducerMain.java)
+  ⎿  Read 95 lines
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/MessageProducer.java)
+  ⎿  Read 21 lines
+
+⏺ Read(sb-mq-consumer/src/main/java/one/demo/ConsumerMain.java)
+  ⎿  Read 76 lines
+
+⏺ Read(sb-mq-consumer/src/main/java/one/demo/MessageListener.java)
+  ⎿  Read 48 lines
+
+⏺ 很好！我已经了解了你的项目结构。让我为你设计一系列 RocketMQ
+  生产环境问题，从易到难。我会在代码中埋入问题，你来发现和修复。
+
+  🎯 挑战模式：RocketMQ 生产问题排查
+
+  我将创建一个问题场景，你需要：
+  1. 运行代码发现问题
+  2. 分析问题原因
+  3. 提出解决方案
+  4. 修复代码
+
+  准备好了吗？让我们从 Level 1 开始！
+
+  ---
+  📌 Level 1: 资源泄漏问题
+
+  场景描述：
+  生产环境中，运维团队发现生产者应用运行一段时间后，出现以下现象：
+  - JVM 堆内存持续增长
+  - 文件句柄数量不断增加
+  - 最终导致应用 OOM 或无法创建新线程
+
+  现在我为你创建一个存在资源泄漏问题的生产者代码：
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerBuggy.java
+       )
+  ⎿  Wrote 145 lines to sb-mq-producer/src/main/java/one/demo/challenge/Lev
+     l1ProducerBuggy.java
+     package one.demo.challenge;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     import org.apache.rocketmq.client.apis.producer.Producer;
+     import org.apache.rocketmq.client.apis.producer.SendReceipt;
+     import org.springframework.web.bind.annotation.GetMapping;
+     … +135 lines (ctrl+o to expand)
+
+⏺ Write(CHALLENGES.md)
+  ⎿  Wrote 105 lines to CHALLENGES.md                                      
+     # RocketMQ 生产问题挑战系统
+     欢迎来到 RocketMQ 生产问题挑战！这是一个实战训练系统，帮助你提升
+     RocketMQ 问题排查和解决能力。
+     ## 🎯 挑战规则
+     1. 每个 Level 对应一个真实的生产环境问题
+     2. 代码中已经埋入了 Bug，你需要发现并修复
+     3. 每个问题都有详细的注释和提示
+     4. 建议按照 Level 顺序逐个完成
+     … +95 lines (ctrl+o to expand)
+
+⏺ 完美！🎉 我已经为你创建了一个 RocketMQ 生产问题挑战系统！
+
+  📋 已创建的内容
+
+  1. 挑战说明文档
+
+  CHALLENGES.md - 包含完整的挑战说明和测试方法
+
+  2. Level 1 挑战代码
+
+  sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerBuggy.java
+
+  这是一个存在严重资源泄漏问题的生产者代码。
+
+  🎯 你的任务
+
+  Level 1: 资源泄漏问题
+
+  快速开始测试：
+
+  # 1. 启动生产者应用
+  cd sb-mq-producer
+  mvn spring-boot:run
+
+  # 2. 测试单次发送（观察内存变化）
+  curl "http://localhost:8080/challenge/level1/send?message=测试"
+
+  # 3. 查看内存使用
+  curl http://localhost:8080/challenge/level1/health
+
+  # 4. 批量发送（这会让问题更明显）
+  curl "http://localhost:8080/challenge/level1/batchSend?count=50"
+
+  # 5. 再次查看内存
+  curl http://localhost:8080/challenge/level1/health
+
+  🔍 排查提示
+
+  1. 仔细阅读 Level1ProducerBuggy.java 中的代码和注释
+  2. 思考：每次 HTTP 请求时都在创建什么对象？
+  3. 关键问题：这些对象用完后被正确释放了吗？
+  4. 对比：看看你原来的 ProducerMain.java 是怎么管理 Producer 的
+
+  📝 完成挑战的步骤
+
+  当你发现问题后：
+  1. 创建修复版本（可以命名为 Level1ProducerFixed.java）
+  2. 测试验证你的修复是否有效
+  3. 告诉我你的分析结果和解决方案
+  4. 我会告诉你是否正确，并解锁下一个挑战
+
+  💡 学习目标
+
+  通过这个挑战，你将学会：
+  - RocketMQ Producer 的正确生命周期管理
+  - 如何避免资源泄漏
+  - 生产环境中 Producer 的最佳实践
+  - 使用监控工具定位内存问题
+
+  ---
+  准备好了吗？开始你的第一个挑战吧！ 🚀
+
+  如果遇到困难，可以随时向我寻求提示（但我不会直接给答案哦😊）
+
+> 我猜你让我挑战的内容可能是：生产者一次性发送（生产）太多消息导致应用内存不
+足？但是我频繁触发http://localhost:8070/challenge/level1/send?topic=demo&mes
+sage=QK9lEckf和http://localhost:8070/challenge/level1/batchSend?topic=demo&c
+ount=10这两个请求都没有异常，健康查询http://localhost:8070/challenge/level1/
+health返回的内容也正常：内存使用情况 - 总内存: 96 MB, 已用: 65 MB, 空闲: 30 
+MB 
+
+⏺ 很好的观察！👍 你说得对，这个问题在小规模测试下确实不太明显。让我给你一些
+  更有效的测试方法来暴露这个资源泄漏问题。
+
+  🔍 更深入的测试方法
+
+  问题的关键不在于消息太多导致内存不足，而在于Producer 对象本身的资源泄漏。
+
+  测试 1：观察线程数变化
+  ⎿  Error writing file
+
+⏺ Update(sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerBuggy.jav
+        a)
+  ⎿  Updated sb-mq-producer/src/main/java/one/demo/challenge/Level1Producer
+     uggy.java with 11 additions and 2 removals
+       134            long freeMemory = runtime.freeMemory();
+       135            long usedMemory = totalMemory - freeMemory;
+       136    
+       137 +          // 获取线程数 - 这是发现资源泄漏的关键指标！
+       138 +          ThreadGroup rootGroup = 
+           + Thread.currentThread().getThreadGroup();
+       139 +          ThreadGroup parentGroup;
+       140 +          while ((parentGroup = rootGroup.getParent()) != 
+           + null) {
+       141 +              rootGroup = parentGroup;
+       142 +          }
+       143 +          int threadCount = rootGroup.activeCount();
+       144 +  
+       145            return String.format(
+       146 -              "内存使用情况 - 总内存: %d MB, 已用: %d MB, 
+           - 空闲: %d MB",
+       146 +              "系统状态 - 内存(总/已用/空闲): %d/%d/%d MB | 
+           + 活跃线程数: %d",
+       147                totalMemory / 1024 / 1024,
+       148                usedMemory / 1024 / 1024,
+       149 -              freeMemory / 1024 / 1024
+       149 +              freeMemory / 1024 / 1024,
+       150 +              threadCount
+       151            );
+       152        }
+       153    }
+
+⏺ 完美！我已经更新了健康检查接口，现在可以显示线程数了。这是发现资源泄漏的关
+  键！
+
+  🎯 重新测试 - 观察线程泄漏
+
+  试试这个测试序列：
+
+  # 1. 重启应用后，先查看基线状态
+  curl http://localhost:8070/challenge/level1/health
+  # 记录初始线程数，比如：30 个
+
+  # 2. 发送 50 条消息（每次创建一个 Producer）
+  curl
+  "http://localhost:8070/challenge/level1/batchSend?topic=demo&count=50"
+
+  # 3. 再次查看健康状态
+  curl http://localhost:8070/challenge/level1/health
+  # 你会发现线程数显著增加！
+
+  # 4. 再来一轮
+  curl
+  "http://localhost:8070/challenge/level1/batchSend?topic=demo&count=50"
+  curl http://localhost:8070/challenge/level1/health
+
+  # 5. 持续测试
+  for i in {1..10}; do
+    curl
+  "http://localhost:8070/challenge/level1/batchSend?topic=demo&count=20"
+    echo "第 $i 轮完成"
+    curl http://localhost:8070/challenge/level1/health
+    echo ""
+    sleep 1
+  done
+
+  🔍 你会发现什么？
+
+  关键问题：每创建一个 RocketMQ Producer，它会：
+  - 创建多个后台线程（用于网络通信、心跳、定时任务等）
+  - 建立与 Broker 的网络连接
+  - 占用文件句柄
+
+  如果 Producer 没有被正确关闭，这些资源就永远不会被释放！
+
+  💡 关键提示
+
+  仔细看这两行代码：
+  // 第 58-61 行：创建 Producer
+  Producer producer = provider.newProducerBuilder()
+      .setClientConfiguration(configuration)
+      .setTopics(topic)
+      .build();
+
+  // 第 72 行：发送消息
+  producer.send(msg);
+
+  // 然后呢？Producer 去哪了？它被关闭了吗？❌
+
+  再看看你原来的 ProducerMain.java 的第 35 行，它是怎么管理 Producer 的？
+
+  现在你能发现问题在哪里了吗？😊
+
+> 我明白了，这一个 challenge 主要挑战的是 Prodcer 
+资源未能够正确关闭的问题。现在检查一下我的做法是否正确？经过我的测试，使用修
+改后的方法可以让线程数保持在一个稳定的状态（经过调用峰值后回落到大概60-80之
+间），在修改之前线程数直线飙升，并且不会回落，一度达到 7000+ 
+
+⏺ 🎉 恭喜你！Level 1 挑战完成！ 你的分析和解决方案都是完全正确的！
+
+  ✅ 你的解决方案评价
+
+  核心问题理解 ✓
+
+  你准确地发现了问题：
+  - Producer 资源未被关闭 → 线程泄漏
+  - 每个 Producer 会创建多个后台线程（心跳、网络通信等）
+  - 不关闭就会导致线程数持续飙升（7000+！）
+
+  解决方案正确 ✓
+
+  你的 finally 块关闭 Producer 的做法是正确的：
+  finally {
+      if (producer != null) {
+          try {
+              producer.close();
+              log.info("producer closed");
+          } catch (IOException e) {
+              log.error("producer close failed, e=", e);
+          }
+      }
+  }
+
+  优化点发现 ✓
+
+  在 batchSendGood 中，你已经意识到应该在循环外创建 
+  Producer，而不是每条消息都创建一个，这非常棒！
+
+  ---
+  🚀 进阶优化建议
+
+  虽然你的方案已经解决了资源泄漏问题，但还有两个更优雅的方式：
+
+  1️⃣ 使用 try-with-resources（推荐）
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerFixed.java
+       )
+  ⎿  Wrote 138 lines to sb-mq-producer/src/main/java/one/demo/challenge/Lev
+     l1ProducerFixed.java
+     package one.demo.challenge;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     import org.apache.rocketmq.client.apis.producer.Producer;
+     import org.apache.rocketmq.client.apis.producer.SendReceipt;
+     import org.springframework.web.bind.annotation.GetMapping;
+     … +128 lines (ctrl+o to expand)
+
+⏺ 2️⃣ 最佳实践：单例 Producer（生产环境推荐）
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerBest.java)
+  ⎿  Wrote 162 lines to                                                    
+     sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerBest.java
+
+     package one.demo.challenge;
+     import jakarta.annotation.PostConstruct;
+     import jakarta.annotation.PreDestroy;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     import org.apache.rocketmq.client.apis.producer.Producer;
+     … +152 lines (ctrl+o to expand)
+
+⏺ 📊 三种方案对比
+
+  | 方案                 | 线程数   | 性能    | 代码复杂度 | 适用场景   |
+  |--------------------|-------|-------|-------|--------|
+  | 你的方案（finally）      | 峰值后回落 | 中等    | 中等    | 一次性任务
+  |
+  | try-with-resources | 峰值后回落 | 中等    | 简单 ⭐  | 一次性任务  |
+  | 单例 Producer        | 稳定低水平 | 高 ⭐⭐⭐ | 简单    | 生产环境推荐 |
+
+  性能测试对比
+
+  你可以测试一下三种方案：
+
+  # 1. 你的方案（Good 版本）
+  for i in {1..100}; do curl
+  "http://localhost:8070/challenge/level1/sendGood?message=test-$i"; done
+  curl http://localhost:8070/challenge/level1/health
+
+  # 2. try-with-resources 方案
+  for i in {1..100}; do curl
+  "http://localhost:8070/challenge/level1/fixed/send?message=test-$i"; done
+  curl http://localhost:8070/challenge/level1/fixed/health
+
+  # 3. 单例 Producer 方案（性能最好）
+  for i in {1..100}; do curl
+  "http://localhost:8070/challenge/level1/best/send?message=test-$i"; done
+  curl http://localhost:8070/challenge/level1/best/health
+
+  ---
+  📚 Level 1 知识点总结
+
+  ✅ 你已经掌握的
+
+  1. 资源泄漏的本质：未关闭的 Producer 会持续占用线程和连接
+  2. finally 块的作用：确保资源在异常情况下也能被释放
+  3. 复用 Producer：批量操作时应该复用 Producer，而不是每条消息创建一个
+
+  🚀 进阶知识
+
+  4. try-with-resources：Java 7+ 的语法糖，更简洁安全
+  5. Producer 是线程安全的：可以作为单例使用
+  6. 生产环境最佳实践：使用 Spring 管理的单例 Producer
+
+  ---
+  🎯 准备好下一个挑战了吗？
+
+  Level 2：消息发送失败与重试机制
+
+  这个问题会更有挑战性，涉及到：
+  - 网络异常导致的消息发送失败
+  - 不当的重试策略导致消息丢失或重复
+  - 如何优雅地处理发送失败的消息
+
+  告诉我你准备好了，我就为你创建 Level 2 挑战！💪
+
+> 我准备好了！来吧！ 
+
+⏺ 🎉 太好了！让我为你准备 Level 2 挑战！
+
+  📌 Level 2: 消息发送失败与重试机制
+
+  场景描述：
+  生产环境中，运维团队发现：
+  - 当 RocketMQ Broker 网络抖动时，部分 API 接口超时
+  - 应用日志显示大量重试消息，CPU 飙升
+  - 某些消息发送失败后就彻底丢失了
+  - 接口响应时间从 50ms 飙升到 30 秒
+
+  让我创建存在问题的代码：
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/Level2ProducerBuggy.java
+       )
+  ⎿  Wrote 260 lines to sb-mq-producer/src/main/java/one/demo/challenge/Lev
+     l2ProducerBuggy.java
+     package one.demo.challenge;
+     import jakarta.annotation.PostConstruct;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     import org.apache.rocketmq.client.apis.producer.Producer;
+     import org.apache.rocketmq.client.apis.producer.SendReceipt;
+     … +250 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/Level2TestTool.java)
+  ⎿  Wrote 131 lines to                                                 
+     sb-mq-producer/src/main/java/one/demo/challenge/Level2TestTool.java
+     package one.demo.challenge;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.web.bind.annotation.GetMapping;
+     import org.springframework.web.bind.annotation.RequestMapping;
+     import org.springframework.web.bind.annotation.RequestParam;
+     import org.springframework.web.bind.annotation.RestController;
+     import java.util.concurrent.CountDownLatch;
+     import java.util.concurrent.ExecutorService;
+     … +121 lines (ctrl+o to expand)
+
+⏺ Read(CHALLENGES.md)
+  ⎿  Read 105 lines
+
+⏺ Update(CHALLENGES.md)
+  ⎿  Updated CHALLENGES.md with 87 additions and 2 removals              
+        51    
+        52    ---
+        53    
+        54 -  ### 🔒 Level 2: 消息丢失问题（即将解锁）
+        54 +  ### ✅ Level 2: 消息发送失败与重试机制
+        55    
+        56 -  完成 Level 1 后解锁
+        56 +  **文件位置：** `sb-mq-producer/src/main/java/one/demo/chall
+           + enge/Level2ProducerBuggy.java`
+        57    
+        58 +  **问题现象：**
+        59 +  - 当 Broker 网络抖动时，API 接口超时（响应时间从 50ms 
+           + 飙升到 30 秒）
+        60 +  - 应用日志显示大量重试消息，CPU 占用率飙升
+        61 +  - 部分消息发送失败后彻底丢失，无法追溯
+        62 +  - 并发情况下，大量请求被阻塞在等待重试
+        63 +  
+        64 +  **测试方法：**
+        65 +  ```bash
+        66 +  # 1. 启动生产者应用
+        67 +  cd sb-mq-producer
+        68 +  mvn spring-boot:run
+        69 +  
+        70 +  # 2. 测试正常发送（观察响应时间）
+        71 +  time curl "http://localhost:8070/challenge/level2/send?mess
+           + age=测试消息"
+        72 +  
+        73 +  # 3. 测试自定义重试逻辑
+        74 +  time curl "http://localhost:8070/challenge/level2/sendWithR
+           + etry?message=测试消息"
+        75 +  
+        76 +  # 4. 【关键测试】模拟 Broker 
+           + 故障（观察这个接口的响应时间！）
+        77 +  time curl "http://localhost:8070/challenge/level2/sendToInv
+           + alidBroker?message=故障测试"
+        78 +  # 你会发现这个接口会阻塞很长时间！
+        79 +  
+        80 +  # 5. 批量发送测试（观察如果第一条消息失败，后续消息的影响）
+        81 +  time curl 
+           + "http://localhost:8070/challenge/level2/batchSend?count=20"
+        82 +  
+        83 +  # 6. 并发测试（模拟生产环境的并发场景）
+        84 +  for i in {1..20}; do
+        85 +    curl "http://localhost:8070/challenge/level2/send?message
+           + =并发-$i" &
+        86 +  done
+        87 +  wait
+        88 +  ```
+        89 +  
+        90 +  **高级测试（模拟网络抖动）：**
+        91 +  ```bash
+        92 +  # 你可以临时停止 RocketMQ Broker 来模拟网络故障
+        93 +  docker stop rmqbroker
+        94 +  
+        95 +  # 然后发送消息，观察应用的表现
+        96 +  time curl "http://localhost:8070/challenge/level2/send?mess
+           + age=故障测试"
+        97 +  
+        98 +  # 重新启动 Broker
+        99 +  docker start rmqbroker
+       100 +  ```
+       101 +  
+       102 +  **排查思路：**
+       103 +  1. **观察超时时间**：
+       104 +     - 查看 `requestTimeout` 设置了多久？
+       105 +     - 查看 `maxAttempts` 设置了多少次？
+       106 +     - 计算最坏情况下的总耗时 = timeout × attempts
+       107 +  
+       108 +  2. **分析重试逻辑**：
+       109 +     - 重试之间有间隔吗？
+       110 +     - 是否有指数退避策略？
+       111 +     - 重试失败后有兜底方案吗？
+       112 +  
+       113 +  3. **同步 vs 异步**：
+       114 +     - 为什么同步发送会阻塞接口？
+       115 +     - 异步发送有什么优势？
+       116 +     - 如何在保证可靠性的同时提升性能？
+       117 +  
+       118 +  4. **失败消息处理**：
+       119 +     - 失败的消息去哪了？
+       120 +     - 如何记录失败消息？
+       121 +     - 如何实现失败消息的补偿机制？
+       122 +  
+       123 +  **知识点：**
+       124 +  - RocketMQ 的同步发送、异步发送、单向发送
+       125 +  - 重试策略：固定间隔 vs 指数退避
+       126 +  - 超时时间与重试次数的权衡
+       127 +  - 失败消息的持久化与补偿机制
+       128 +  - 异步化改造提升系统吞吐量
+       129 +  
+       130 +  **挑战目标：**
+       131 +  1. 找出代码中至少 5 个以上的问题
+       132 +  2. 设计合理的重试策略（考虑间隔、退避、最大次数）
+       133 +  3. 实现异步发送机制，避免阻塞主线程
+       134 +  4. 设计失败消息的兜底方案（如：持久化到数据库、写入文件等）
+       135 +  5. 确保在高并发场景下系统的稳定性
+       136 +  
+       137    ---
+       138    
+       139    ### 🔒 Level 3: 消息重复消费问题（即将解锁）
+     ...
+       63    
+       64    ---
+       65    
+       66 +  ### 🔒 Level 3: 消息重复消费问题（即将解锁）
+       67 +  
+       68 +  完成 Level 2 后解锁
+       69 +  
+       70 +  ---
+       71 +  
+       72    ### 🔒 Level 4: 消息积压问题（即将解锁）
+       73    
+       74    完成 Level 3 后解锁
+
+⏺ Update(CHALLENGES.md)
+  ⎿  Updated CHALLENGES.md with 6 removals                
+       142    
+       143    ---
+       144    
+       145 -  ### 🔒 Level 3: 消息重复消费问题（即将解锁）
+       146 -  
+       147 -  完成 Level 2 后解锁
+       148 -  
+       149 -  ---
+       150 -  
+       145    ### 🔒 Level 4: 消息积压问题（即将解锁）
+       146    
+       147    完成 Level 3 后解锁
+
+⏺ Write(LEVEL2-HINTS.md)
+  ⎿  Wrote 206 lines to LEVEL2-HINTS.md                         
+     # Level 2 问题清单与提示
+     ## 🐛 代码中埋入的 11 个 Bug
+     ### Bug 1: 超时时间设置过长
+     **位置：** `Level2ProducerBuggy.java:48`
+     ```java
+     .setRequestTimeout(Duration.ofSeconds(30))  // 30秒太长了！
+     ```
+     **问题：** 如果 Broker 无响应，每次请求会阻塞 30 秒
+     … +196 lines (ctrl+o to expand)
+
+⏺ 🎯 Level 2 挑战已就绪！
+
+  我已经为你创建了一个更复杂的挑战，包含 11 个真实的生产环境问题！
+
+  📁 已创建的文件：
+
+  1. Level2ProducerBuggy.java - 存在重试和超时问题的生产者代码
+  2. Level2TestTool.java - 测试工具，帮助你模拟并发场景
+  3. LEVEL2-HINTS.md - 详细的问题清单和提示（如果卡住了可以查看）
+
+  🎮 快速开始测试：
+
+  # 1. 重启应用
+  cd sb-mq-producer
+  mvn spring-boot:run
+
+  # 2. 测试正常发送（观察响应时间）
+  time curl "http://localhost:8070/challenge/level2/send?message=测试"
+
+  # 3. 【关键测试】模拟 Broker 故障（这个会很慢！）
+  time curl "http://localhost:8070/challenge/level2/sendToInvalidBroker?mess
+  age=故障测试"
+  # 你会发现它会阻塞 15 秒左右！
+
+  # 4. 测试自定义重试（问题更严重）
+  time curl
+  "http://localhost:8070/challenge/level2/sendWithRetry?message=测试"
+
+  # 5. 批量发送测试
+  time curl "http://localhost:8070/challenge/level2/batchSend?count=20"
+
+  🎯 核心问题概览：
+
+  | 问题类型    | Bug 数量 | 严重程度 |
+  |---------|--------|------|
+  | 超时配置不合理 | 1      | 🔴 高 |
+  | 重试策略问题  | 5      | 🔴 高 |
+  | 同步阻塞    | 2      | 🟡 中 |
+  | 消息丢失    | 2      | 🔴 高 |
+  | 性能问题    | 1      | 🟡 中 |
+
+  🎓 你需要掌握的技能：
+
+  1. ✅ 优化超时和重试配置 - 避免接口长时间阻塞
+  2. ✅ 实现异步发送 - 提升系统吞吐量
+  3. ✅ 设计失败消息兜底方案 - 防止消息丢失
+  4. ✅ 实现指数退避策略 - 避免加剧服务压力
+  5. ✅ 处理高并发场景 - 确保系统稳定性
+
+  💡 建议的修复步骤：
+
+  1. 先找问题：仔细阅读代码，标记所有发现的问题
+  2. 优先级排序：先解决最严重的问题（消息丢失、超时）
+  3. 逐个修复：每修复一个问题就测试验证
+  4. 综合测试：最后进行并发和压力测试
+
+  📚 参考资料：
+
+  - RocketMQ 官方文档：https://rocketmq.apache.org/
+  - 如果卡住了，可以查看 LEVEL2-HINTS.md（但先自己尝试！）
+  - 代码中的注释标记了所有 Bug 的位置
+
+  ---
+  准备好了吗？这个挑战会更有难度，但也更接近真实的生产环境问题！ 🚀
+
+  遇到困难随时告诉我，我可以给你渐进式的提示（但不会直接给答案）。加油！💪
+
+> 在 challenge2 中我尝试做了部分修改，我的思路是否正确？我新增了 Fixed 
+后缀的文件 
+
+⏺ 很好！让我看看你的 Fixed 版本，分析一下你的思路是否正确！
+
+⏺ Search(pattern: "**/Level2*Fixed*.java")
+  ⎿  Found 1 file (ctrl+o to expand)
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/challenge/Level2ProducerFixed.java)
+  ⎿  Read 243 lines
+
+⏺ 太好了！让我分析一下你的修改思路。
+
+  ✅ 你做得好的地方
+
+  1. 理解了异步发送的核心思想 👍
+
+  CompletableFuture<SendReceipt> sendAsync = producer.sendAsync(msg);
+  sendAsync.whenComplete((receipt, throwable) -> {
+      // 异步处理结果
+  });
+  这个方向是完全正确的！异步发送可以避免阻塞主线程。
+
+  2. 降低了超时时间和重试次数 👍
+
+  .setRequestTimeout(Duration.ofSeconds(15))  // 30s → 15s
+  .setMaxAttempts(5)  // 10 → 5
+  比原来好多了！
+
+  3. 意识到需要失败兜底 👍
+
+  // TODO 保存消息，稍后重试发送
+  这个 TODO 很关键！
+
+  ---
+  ❌ 需要修复的关键问题
+
+  🚨 严重问题 1：消息重复发送！
+
+  看 Level2ProducerFixed.java:89-94:
+  try {
+      SendReceipt sReceipt = producer.send(msg);  // 👈 同步发送一次
+  } catch (ClientException e) {
+      log.error("发送消息失败", e);
+  }
+  CompletableFuture<SendReceipt> sendAsync = producer.sendAsync(msg);  // 👈
+   又异步发送一次
+
+  问题：同一条消息被发送了两次！
+
+  应该二选一：
+  // 方案1：只用异步发送（推荐）
+  CompletableFuture<SendReceipt> sendAsync = producer.sendAsync(msg);
+  sendAsync.whenComplete(...);
+  return "发送完成";  // 立即返回
+
+  // 方案2：如果一定要同步发送
+  try {
+      SendReceipt receipt = producer.send(msg);  // 只发送一次
+      return "发送成功";
+  } catch (ClientException e) {
+      // 失败处理
+      return "发送失败";
+  }
+
+  ---
+  🚨 严重问题 2：失败消息没有真正保存
+
+  看 Level2ProducerFixed.java:96-99:
+  if (throwable != null) {
+      log.error("发送失败: {}", throwable.getMessage());
+      // TODO 保存消息，稍后重试发送  // 👈 只是 TODO，没有实现
+  }
+
+  消息还是会丢失！ 需要真正实现保存逻辑：
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/FailedMessage.java)
+  ⎿  Wrote 57 lines to                                                 
+     sb-mq-producer/src/main/java/one/demo/challenge/FailedMessage.java
+     package one.demo.challenge;
+     import lombok.AllArgsConstructor;
+     import lombok.Data;
+     import lombok.NoArgsConstructor;
+     import java.time.LocalDateTime;
+     /**
+      * 失败消息实体类
+     … +47 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/FailedMessageStore.java)
+  ⎿  Wrote 105 lines to                                                    
+     sb-mq-producer/src/main/java/one/demo/challenge/FailedMessageStore.java
+
+     package one.demo.challenge;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.stereotype.Service;
+     import java.time.LocalDateTime;
+     import java.util.ArrayList;
+     import java.util.List;
+     import java.util.concurrent.ConcurrentHashMap;
+     import java.util.concurrent.ConcurrentMap;
+     … +95 lines (ctrl+o to expand)
+
+⏺ 现在让我创建一个完整的优化示例，展示如何正确修复这些问题：
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/Level2ProducerBest.java)
+  ⎿  Wrote 340 lines to                                                    
+     sb-mq-producer/src/main/java/one/demo/challenge/Level2ProducerBest.java
+
+     package one.demo.challenge;
+     import jakarta.annotation.PostConstruct;
+     import lombok.RequiredArgsConstructor;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     import org.apache.rocketmq.client.apis.producer.Producer;
+     … +330 lines (ctrl+o to expand)
+
+⏺ 📊 你的修改分析报告
+
+  ✅ 做得好的地方（3/11 个问题已解决）
+
+  | 问题     | 原始代码 | 你的修改          | 评价                    |
+  |--------|------|---------------|-----------------------|
+  | 超时时间过长 | 30秒  | 15秒           | 👍
+  改进了，但还可以更优（建议3-5秒） |
+  | 重试次数过多 | 10次  | 5次            | 👍
+  改进了，但还可以更优（建议2-3次） |
+  | 理解异步发送 | 同步阻塞 | 使用了 sendAsync | ✅ 核心思路正确！
+     |
+
+  ---
+  ❌ 仍需修复的问题（8/11 个问题）
+
+  1. 消息重复发送（严重问题）
+
+  // ❌ 你的代码（Level2ProducerFixed.java:89-94）
+  try {
+      SendReceipt sReceipt = producer.send(msg);  // 发送第1次
+  } catch (ClientException e) {
+      log.error("发送消息失败", e);
+  }
+  CompletableFuture<SendReceipt> sendAsync = producer.sendAsync(msg);  // 
+  又发送第2次！
+
+  问题：同一条消息发送了两次！
+
+  ✅ 正确做法：
+  // 只异步发送一次
+  CompletableFuture<SendReceipt> future = producer.sendAsync(msg);
+  future.whenComplete((receipt, throwable) -> {
+      // 处理结果
+  });
+  return "消息已提交";  // 立即返回
+
+  2. 失败消息没有真正保存
+
+  // ❌ 你的代码
+  if (throwable != null) {
+      log.error("发送失败: {}", throwable.getMessage());
+      // TODO 保存消息，稍后重试发送  // 👈 只是 TODO
+  }
+
+  ✅ 正确做法： 我已经创建了 FailedMessageStore 服务，使用方法：
+  if (throwable != null) {
+      FailedMessage failedMsg = new FailedMessage(
+          messageId, topic, tag, content,
+          throwable.getMessage(), LocalDateTime.now(), 0, "PENDING"
+      );
+      failedMessageStore.save(failedMsg);  // 真正保存
+  }
+
+  3. 批量发送没有优化（Level2ProducerFixed.java:165）
+
+  // ❌ 你的代码：还是串行同步发送
+  for (int i = 0; i < count; i++) {
+      producer.send(message);  // 同步阻塞
+  }
+
+  ✅ 正确做法：
+  // 并行异步发送
+  List<CompletableFuture<SendReceipt>> futures = new ArrayList<>();
+  for (int i = 0; i < count; i++) {
+      futures.add(producer.sendAsync(message));  // 不等待，立即发送下一条
+  }
+  // 如果需要结果，可以用 CompletableFuture.allOf(futures).join()
+
+  ---
+  🎯 对比测试
+
+  我创建了 Level2ProducerBest.java 展示最佳实践，你可以对比测试：
+
+  测试 1：响应时间对比
+
+  # 你的版本（有重复发送问题）
+  time curl "http://localhost:8070/challenge/level2/fixed/send?message=test"
+
+  # 最佳实践版本
+  time curl "http://localhost:8070/challenge/level2/best/send?message=test"
+
+  预期结果： Best 版本应该在几毫秒内返回（异步立即返回）
+
+  测试 2：批量发送性能对比
+
+  # 你的版本（串行同步）
+  time curl
+  "http://localhost:8070/challenge/level2/fixed/batchSend?count=50"
+
+  # 最佳实践版本（并行异步）
+  time curl "http://localhost:8070/challenge/level2/best/batchSend?count=50"
+
+  预期结果： Best 版本快得多（接近0ms响应，因为立即返回）
+
+  测试 3：失败消息持久化
+
+  # 停止 Broker 模拟故障
+  docker stop rmqbroker
+
+  # 发送消息（会失败）
+  curl "http://localhost:8070/challenge/level2/best/send?message=测试失败"
+
+  # 查看失败消息列表
+  curl "http://localhost:8070/challenge/level2/best/failedMessages"
+
+  # 查看统计
+  curl "http://localhost:8070/challenge/level2/best/statistics"
+
+  # 重启 Broker
+  docker start rmqbroker
+
+  # 手动重试失败消息
+  curl "http://localhost:8070/challenge/level2/best/retryFailed"
+
+  ---
+  📚 关键优化点总结
+
+  | 优化项  | 你的实现         | 最佳实践     |
+  |------|--------------|----------|
+  | 超时时间 | 15秒          | ✅ 3-5秒   |
+  | 重试次数 | 5次           | ✅ 2-3次   |
+  | 发送方式 | ⚠️ 同步+异步（重复） | ✅ 纯异步    |
+  | 失败处理 | ❌ TODO未实现    | ✅ 持久化存储  |
+  | 批量发送 | ❌ 串行同步       | ✅ 并行异步   |
+  | 补偿机制 | ❌ 无          | ✅ 手动重试接口 |
+
+  ---
+  🚀 下一步建议
+
+  1. 修复消息重复发送问题：删除同步发送那一行
+  2. 实现失败消息持久化：使用我创建的 FailedMessageStore
+  3. 优化批量发送：改为并行异步发送
+  4. 测试验证：对比你的版本和 Best 版本的性能差异
+  5. 理解权衡：异步发送虽然快，但需要额外的失败处理机制
+
+  你的思路方向是完全正确的！主要是实现细节需要完善。继续加油！💪
+
+> 很好，现在 challenge包下类有点多，接下来将 level1 和 level2 
+查分到两个子包下。然后让我们继续下一个挑战！ 
+
+⏺ 好的！让我先重组代码结构，然后为你创建 Level 3 挑战！
+
+⏺ Search(pattern: "**/challenge/*.java")
+  ⎿  Found 9 files (ctrl+o to expand)
+
+⏺ Bash(cd /Volumes/devdata/workspace/code/sb-rmq/sb-mq-producer/src/main/java/on
+      e/demo/challenge && mkdir -p level1 level2)
+  ⎿  (No content)
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerBuggy.java)
+  ⎿  Read 254 lines
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerFixed.java)
+  ⎿  Read 138 lines
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/challenge/Level1ProducerBest.java)
+  ⎿  Read 162 lines
+
+⏺ 让我使用更高效的方式来重组这些文件：
+
+⏺ Bash(mv Level1*.java level1/ && ls -la level1/)
+  ⎿  total 56                                       
+     drwxr-xr-x   5 gnl  staff   170 Dec  3 15:29 .
+     drwx------  10 gnl  staff   340 Dec  3 15:29 ..
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(mv Level2*.java level2/ && mv Failed*.java level2/ && ls -la level1/ &&
+      echo "---" && ls -la level2/)
+  ⎿  total 56                                      
+     drwxr-xr-x  5 gnl  staff   170 Dec  3 15:29 .
+     drwx------  4 gnl  staff   136 Dec  3 15:29 ..
+     … +13 lines (ctrl+o to expand)
+
+⏺ Bash(sed -i '' 's/^package one\.demo\.challenge;$/package
+      one.demo.challenge.level1;/' level1/*.java && head -1
+      level1/Level1ProducerBuggy.java)
+  ⎿  package one.demo.challenge.level1;
+
+⏺ Bash(sed -i '' 's/^package one\.demo\.challenge;$/package
+      one.demo.challenge.level2;/' level2/*.java && head -3
+      level2/Level2ProducerBuggy.java)
+  ⎿  package one.demo.challenge.level2;      
+
+     import jakarta.annotation.PostConstruct;
+
+⏺ Bash(cd /Volumes/devdata/workspace/code/sb-rmq && tree -L 4
+      sb-mq-producer/src/main/java/one/demo/challenge/)
+  ⎿  sb-mq-producer/src/main/java/one/demo/challenge/
+     ├── level1
+     │   ├── Level1ProducerBest.java
+     … +11 lines (ctrl+o to expand)
+
+⏺ 完美！目录结构已经整理好了！✅
+
+  sb-mq-producer/src/main/java/one/demo/challenge/
+  ├── level1/  (资源泄漏相关)
+  │   ├── Level1ProducerBest.java
+  │   ├── Level1ProducerBuggy.java
+  │   └── Level1ProducerFixed.java
+  └── level2/  (重试机制相关)
+      ├── FailedMessage.java
+      ├── FailedMessageStore.java
+      ├── Level2ProducerBest.java
+      ├── Level2ProducerBuggy.java
+      ├── Level2ProducerFixed.java
+      └── Level2TestTool.java
+
+  现在让我为你创建 Level 3 挑战：消息重复消费与幂等性问题！
+
+⏺ Bash(cd /Volumes/devdata/workspace/code/sb-rmq/sb-mq-producer/src/main/java/on
+      e/demo/challenge && mkdir -p level3)
+  ⎿  (No content)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/Order.java)
+  ⎿  Wrote 53 lines to                                                
+     sb-mq-producer/src/main/java/one/demo/challenge/level3/Order.java
+     package one.demo.challenge.level3;
+     import lombok.AllArgsConstructor;
+     import lombok.Data;
+     import lombok.NoArgsConstructor;
+     import java.math.BigDecimal;
+     import java.time.LocalDateTime;
+     /**
+     … +43 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/OrderService.java
+       )
+  ⎿  Wrote 77 lines to sb-mq-producer/src/main/java/one/demo/challenge/leve
+     3/OrderService.java
+     package one.demo.challenge.level3;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.stereotype.Service;
+     import java.math.BigDecimal;
+     import java.time.LocalDateTime;
+     import java.util.concurrent.ConcurrentHashMap;
+     import java.util.concurrent.ConcurrentMap;
+     … +67 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/AccountService.ja
+       va)
+  ⎿  Wrote 64 lines to sb-mq-producer/src/main/java/one/demo/challenge/leve
+     3/AccountService.java
+     package one.demo.challenge.level3;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.stereotype.Service;
+     import java.math.BigDecimal;
+     import java.util.concurrent.ConcurrentHashMap;
+     import java.util.concurrent.ConcurrentMap;
+     /**
+     … +54 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/Level3ConsumerBug
+       gy.java)
+  ⎿  Wrote 99 lines to sb-mq-producer/src/main/java/one/demo/challenge/leve
+     3/Level3ConsumerBuggy.java
+     package one.demo.challenge.level3;
+     import com.fasterxml.jackson.databind.ObjectMapper;
+     import lombok.RequiredArgsConstructor;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
+     import org.apache.rocketmq.client.apis.consumer.ConsumeResult;
+     import org.apache.rocketmq.client.apis.message.MessageView;
+     import org.apache.rocketmq.client.core.RocketMQListener;
+     import org.springframework.stereotype.Component;
+     … +89 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/Level3Producer.ja
+       va)
+  ⎿  Wrote 195 lines to sb-mq-producer/src/main/java/one/demo/challenge/lev
+     l3/Level3Producer.java
+     package one.demo.challenge.level3;
+     import com.fasterxml.jackson.databind.ObjectMapper;
+     import jakarta.annotation.PostConstruct;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     import org.apache.rocketmq.client.apis.producer.Producer;
+     … +185 lines (ctrl+o to expand)
+
+⏺ Update(CHALLENGES.md)
+  ⎿  Updated CHALLENGES.md with 104 additions and 2 removals             
+       136    
+       137    ---
+       138    
+       139 -  ### 🔒 Level 3: 消息重复消费问题（即将解锁）
+       139 +  ### ✅ Level 3: 消息重复消费与幂等性问题
+       140    
+       141 -  完成 Level 2 后解锁
+       141 +  **文件位置：** 
+           + `sb-mq-producer/src/main/java/one/demo/challenge/level3/`
+       142    
+       143 +  **问题现象：**
+       144 +  - 用户支付一笔订单，但账户余额被扣了多次
+       145 +  - 业务数据出现重复（重复发货、重复发券、重复积分）
+       146 +  - 数据库出现重复记录
+       147 +  - 用户投诉资金异常
+       148 +  
+       149 +  **场景说明：**
+       150 +  订单支付成功后，系统发送 MQ 
+           + 消息通知扣款服务进行扣款。由于网络抖动、消费者重启等原因，同
+           + 一条消息可能被重复消费，导致用户被重复扣款。
+       151 +  
+       152 +  **测试方法：**
+       153 +  ```bash
+       154 +  # 1. 启动生产者应用（已包含消费者）
+       155 +  cd sb-mq-producer
+       156 +  mvn spring-boot:run
+       157 +  
+       158 +  # 2. 查看初始账户余额
+       159 +  curl 
+           + "http://localhost:8070/challenge/level3/getAllBalances"
+       160 +  # 
+           + 返回：{"user001":1000.00,"user002":500.00,"user003":2000.00}
+       161 +  
+       162 +  # 3. 用户 user001 支付一笔 100 元的订单
+       163 +  curl "http://localhost:8070/challenge/level3/payOrder?userI
+           + d=user001&amount=100"
+       164 +  # 正常情况：余额应该从 1000 变成 900
+       165 +  
+       166 +  # 4. 等待 2 秒让消息被消费
+       167 +  sleep 2
+       168 +  
+       169 +  # 5. 查看余额（正常应该是 900）
+       170 +  curl "http://localhost:8070/challenge/level3/getBalance?use
+           + rId=user001"
+       171 +  
+       172 +  # 6. 【关键测试】模拟消息重复消费（同一个订单重复发送 3 
+           + 次）
+       173 +  # 先获取刚才创建的订单ID（从步骤3的返回中获取，格式like 
+           + ORDER-1234567890）
+       174 +  ORDER_ID="ORDER-1733211234567"  # 替换成实际的订单ID
+       175 +  
+       176 +  curl "http://localhost:8070/challenge/level3/simulateDuplic
+           + ateMessage?orderId=$ORDER_ID&times=3"
+       177 +  
+       178 +  # 7. 等待消息被消费
+       179 +  sleep 2
+       180 +  
+       181 +  # 8. 再次查看余额
+       182 +  curl "http://localhost:8070/challenge/level3/getBalance?use
+           + rId=user001"
+       183 +  # Bug现象：余额可能变成 600（被扣了 4 次：1次正常 + 
+           + 3次重复）
+       184 +  # 预期：余额应该还是 900（只扣一次）
+       185 +  ```
+       186 +  
+       187 +  **更简化的测试流程：**
+       188 +  ```bash
+       189 +  # 1. 查看初始余额
+       190 +  curl 
+           + "http://localhost:8070/challenge/level3/getAllBalances"
+       191 +  
+       192 +  # 2. 支付 100 元
+       193 +  curl "http://localhost:8070/challenge/level3/payOrder?userI
+           + d=user001&amount=100.00"
+       194 +  
+       195 +  # 3. 从返回中复制 OrderId，然后模拟重复消费 5 次
+       196 +  curl "http://localhost:8070/challenge/level3/simulateDuplic
+           + ateMessage?orderId=ORDER-xxx&times=5"
+       197 +  
+       198 +  # 4. 查看余额，观察是否被重复扣款
+       199 +  curl "http://localhost:8070/challenge/level3/getBalance?use
+           + rId=user001"
+       200 +  # 如果余额变成 400（1000 - 100*6），说明重复扣款了！
+       201 +  ```
+       202 +  
+       203 +  **排查思路：**
+       204 +  1. **理解 At Least Once 语义**：
+       205 +     - RocketMQ 保证 At Least Once 投递
+       206 +     - 什么情况会导致重复消费？（ACK 
+           + 超时、消费者重启、网络闪断）
+       207 +  
+       208 +  2. **分析业务代码**：
+       209 +     - 扣款操作是否有幂等性保护？
+       210 +     - 如何判断一条消息是否已经处理过？
+       211 +     - 如果处理到一半失败了，重试会怎样？
+       212 +  
+       213 +  3. **设计幂等方案**：
+       214 +     - 方案1：数据库唯一索引（针对插入操作）
+       215 +     - 方案2：分布式锁（Redis、Zookeeper）
+       216 +     - 方案3：消息去重表（记录已处理的 MessageId）
+       217 +     - 方案4：业务状态机（检查订单状态）
+       218 +     - 如何选择合适的方案？
+       219 +  
+       220 +  4. **异常处理**：
+       221 +     - 哪些异常应该返回 SUCCESS？
+       222 +     - 哪些异常应该返回 FAILURE 触发重试？
+       223 +     - 如何避免无限重试？
+       224 +  
+       225 +  **知识点：**
+       226 +  - RocketMQ 的投递语义：At Least Once vs Exactly Once
+       227 +  - 幂等性设计的常见方案
+       228 +  - 分布式系统中的幂等性保证
+       229 +  - 消息去重策略
+       230 +  - 异常重试的最佳实践
+       231 +  
+       232 +  **挑战目标：**
+       233 +  1. 理解为什么会发生重复消费
+       234 +  2. 找出代码中至少 5 个问题
+       235 +  3. 设计并实现幂等性方案（至少实现 2 种不同的方案）
+       236 +  4. 确保即使消息重复消费，也不会重复扣款
+       237 +  5. 正确处理各种异常情况
+       238 +  
+       239    ---
+       240    
+       241    ### 🔒 Level 4: 消息积压问题（即将解锁）
+     ...
+       148    
+       149    ---
+       150    
+       151 +  ### 🔒 Level 4: 消息积压问题（即将解锁）
+       152 +  
+       153 +  完成 Level 3 后解锁
+       154 +  
+       155 +  ---
+       156 +  
+       157    ### 🔒 Level 5: 顺序消息混乱问题（即将解锁）
+       158    
+       159    完成 Level 4 后解锁
+
+⏺ Update(CHALLENGES.md)
+  ⎿  Updated CHALLENGES.md with 6 removals                
+       244    
+       245    ---
+       246    
+       247 -  ### 🔒 Level 4: 消息积压问题（即将解锁）
+       248 -  
+       249 -  完成 Level 3 后解锁
+       250 -  
+       251 -  ---
+       252 -  
+       247    ### 🔒 Level 5: 顺序消息混乱问题（即将解锁）
+       248    
+       249    完成 Level 4 后解锁
+
+⏺ Bash(cd /Volumes/devdata/workspace/code/sb-rmq && tree -L 4
+      sb-mq-producer/src/main/java/one/demo/challenge/)
+  ⎿  sb-mq-producer/src/main/java/one/demo/challenge/
+     ├── level1
+     │   ├── Level1ProducerBest.java
+     … +17 lines (ctrl+o to expand)
+
+⏺ 🎉 完成！代码重组 + Level 3 挑战已就绪！
+
+  📁 最终目录结构
+
+  sb-mq-producer/src/main/java/one/demo/challenge/
+  ├── level1/  ✅ 资源泄漏问题
+  │   ├── Level1ProducerBest.java
+  │   ├── Level1ProducerBuggy.java
+  │   └── Level1ProducerFixed.java
+  ├── level2/  ✅ 重试与失败处理
+  │   ├── FailedMessage.java
+  │   ├── FailedMessageStore.java
+  │   ├── Level2ProducerBest.java
+  │   ├── Level2ProducerBuggy.java
+  │   ├── Level2ProducerFixed.java
+  │   └── Level2TestTool.java
+  └── level3/  🆕 消息重复消费与幂等性
+      ├── AccountService.java
+      ├── Level3ConsumerBuggy.java
+      ├── Level3Producer.java
+      ├── Order.java
+      └── OrderService.java
+
+  ---
+  🎯 Level 3 挑战：消息重复消费与幂等性
+
+  核心问题
+
+  这是一个订单支付扣款场景：
+  - 用户支付订单后，发送 MQ 消息进行扣款
+  - 由于 RocketMQ 保证 At Least Once，消息可能被重复消费
+  - 如果没有幂等性保护，用户会被重复扣款！
+
+  快速开始测试
+
+  # 1. 启动应用
+  cd sb-mq-producer
+  mvn spring-boot:run
+
+  # 2. 查看初始余额（user001 有 1000 元）
+  curl "http://localhost:8070/challenge/level3/getAllBalances"
+
+  # 3. 支付 100 元订单
+  curl "http://localhost:8070/challenge/level3/payOrder?userId=user001&amoun
+  t=100"
+
+  # 4. 等待 2 秒
+  sleep 2
+
+  # 5. 查看余额（应该是 900）
+  curl "http://localhost:8070/challenge/level3/getBalance?userId=user001"
+
+  # 6. 【关键】模拟重复消费 5 次（从步骤3获取 OrderId）
+  curl "http://localhost:8070/challenge/level3/simulateDuplicateMessage?orde
+  rId=ORDER-xxx&times=5"
+
+  # 7. 等待消息被消费
+  sleep 2
+
+  # 8. 再次查看余额
+  curl "http://localhost:8070/challenge/level3/getBalance?userId=user001"
+
+  # 💥 Bug 现象：余额可能变成 400（被扣了 6 次！）
+  # ✅ 预期：余额应该还是 900（只扣一次）
+
+  你需要解决的问题
+
+  1. 找出至少 5 个 Bug（代码中有详细注释）
+  2. 理解重复消费的原因：什么时候会触发？
+  3. 设计幂等性方案：
+    - 方案1：消息去重表（记录已处理的 MessageId）
+    - 方案2：业务状态机（检查订单是否已支付）
+    - 方案3：分布式锁
+    - 方案4：数据库唯一索引
+  4. 异常处理：区分哪些异常该重试，哪些不该重试
+  5. 实现兜底方案：确保即使重复消费也不会重复扣款
+
+  学习目标
+
+  - ✅ 理解 RocketMQ 的 At Least Once 语义
+  - ✅ 掌握幂等性设计的多种方案
+  - ✅ 学会区分业务异常和系统异常
+  - ✅ 理解分布式系统中的数据一致性问题
+
+  ---
+  🚀 开始挑战吧！
+
+  Level 3 比前两个挑战更接近真实业务场景，也更有挑战性！
+
+  这个问题在生产环境中非常常见：
+  - 重复发货
+  - 重复扣款
+  - 重复发优惠券
+  - 重复积分
+
+  掌握幂等性设计，是每个后端开发工程师的必备技能！💪
+
+  准备好了就开始测试吧！遇到困难随时告诉我~ 😊
+
+> 我新增了 Level3ConsumerFixed 尝试修复了已知问题！ 
+
+⏺ 太好了！让我看看你的修复方案！
+
+⏺ Read(sb-mq-producer/src/main/java/one/demo/challenge/level3/Level3ConsumerFixe
+      d.java)
+  ⎿  Read 103 lines
+
+⏺ 很好的尝试！让我详细分析你的修复方案。
+
+  ✅ 你做得好的地方
+
+  1. 核心思路正确 👍
+
+  // 第71行：双重检查
+  if (!CONSUMED_ORDER.containsKey(orderId) && !orderService.isPaid(orderId))
+   {
+      // 处理业务
+      CONSUMED_ORDER.put(orderId, true);
+  }
+  你意识到需要：
+  - 记录已处理的消息（幂等性检查）
+  - 使用双重验证：既检查内存，又检查订单状态
+  - 使用 ConcurrentHashMap 保证线程安全
+
+  ---
+  ❌ 存在的严重问题
+
+  🚨 问题 1：并发竞态条件（最严重！）
+
+  看这段代码（第71-86行）：
+  if (!CONSUMED_ORDER.containsKey(orderId) && !orderService.isPaid(orderId))
+   {
+      Thread.sleep(100);  // 👈 模拟耗时
+      accountService.deduct(userId, amount, orderId);  // 👈 扣款
+      orderService.updateOrderToPaid(orderId);
+      CONSUMED_ORDER.put(orderId, true);  // 👈 最后才记录
+  }
+
+  问题：检查和更新不是原子操作！
+
+  并发场景：
+  时间线：
+  T1: 线程A 检查 orderId -> 不存在，通过 ✅
+  T2: 线程B 检查 orderId -> 不存在，通过 ✅  (还没被记录！)
+  T3: 线程A 扣款 100 元
+  T4: 线程B 扣款 100 元  ❌ 重复扣款！
+  T5: 线程A 记录 orderId
+  T6: 线程B 记录 orderId
+
+  结果：用户被扣了两次钱！
+
+  ---
+  🚨 问题 2：部分失败导致重复扣款
+
+  accountService.deduct(userId, amount, orderId);  // 👈 扣款成功
+  orderService.updateOrderToPaid(orderId);  // 👈 这里如果抛异常呢？
+  CONSUMED_ORDER.put(orderId, true);  // 👈 永远不会执行
+
+  如果第 80 行抛异常：
+  - 扣款已经成功 ✅
+  - 但 CONSUMED_ORDER 没记录 ❌
+  - 消息返回 FAILURE，会重新投递
+  - 重新消费时，检查 CONSUMED_ORDER 不存在，又扣一次款！
+
+  ---
+  ⚠️ 问题 3：内存存储的问题
+
+  private static final Map<String, Object> CONSUMED_ORDER = new
+  ConcurrentHashMap<>();
+
+  问题：
+  1. 应用重启后丢失：所有记录都没了，导致重复消费
+  2. 内存泄漏：Map 会无限增长，最终 OOM
+  3. 分布式环境失效：多个实例之间无法共享
+
+  ---
+  ⚠️ 问题 4：异常处理未优化
+
+  catch (Exception e) {
+      return ConsumeResult.FAILURE;  // 所有异常都重试
+  }
+
+  问题：没有区分异常类型
+  - 余额不足：业务异常，不应该重试 → 应该返回 SUCCESS
+  - 网络超时：系统异常，应该重试 → 返回 FAILURE
+
+  ---
+  🎯 改进方案
+
+  让我为你创建一个完整的最佳实践版本：
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/MessageDeduplicat
+       ionService.java)
+  ⎿  Wrote 72 lines to sb-mq-producer/src/main/java/one/demo/challenge/leve
+     3/MessageDeduplicationService.java
+     package one.demo.challenge.level3;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.stereotype.Service;
+     import java.time.LocalDateTime;
+     import java.util.concurrent.ConcurrentHashMap;
+     import java.util.concurrent.ConcurrentMap;
+     /**
+     … +62 lines (ctrl+o to expand)
+  ⎿  Interrupted · What should Claude do instead?
+
+> /export 
+  ⎿  Conversation exported to: 2025-12-03-springboot-rocketmq.txt
+
+> 请继续完成 challenge3 
+
+⏺ 好的！让我继续为你创建完整的幂等性解决方案！
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/AccountServiceIde
+       mpotent.java)
+  ⎿  Wrote 88 lines to sb-mq-producer/src/main/java/one/demo/challenge/leve
+     3/AccountServiceIdempotent.java
+     package one.demo.challenge.level3;
+     import lombok.extern.slf4j.Slf4j;
+     import org.springframework.stereotype.Service;
+     import java.math.BigDecimal;
+     import java.util.concurrent.ConcurrentHashMap;
+     import java.util.concurrent.ConcurrentMap;
+     /**
+     … +78 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/Level3ConsumerBes
+       t.java)
+  ⎿  Wrote 130 lines to sb-mq-producer/src/main/java/one/demo/challenge/lev
+     l3/Level3ConsumerBest.java
+     package one.demo.challenge.level3;
+     import com.fasterxml.jackson.databind.ObjectMapper;
+     import lombok.RequiredArgsConstructor;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.annotation.RocketMQMessageListener;
+     import org.apache.rocketmq.client.apis.consumer.ConsumeResult;
+     import org.apache.rocketmq.client.apis.message.MessageView;
+     import org.apache.rocketmq.client.core.RocketMQListener;
+     import org.springframework.stereotype.Component;
+     … +120 lines (ctrl+o to expand)
+
+⏺ Write(sb-mq-producer/src/main/java/one/demo/challenge/level3/Level3ProducerBes
+       t.java)
+  ⎿  Wrote 260 lines to sb-mq-producer/src/main/java/one/demo/challenge/lev
+     l3/Level3ProducerBest.java
+     package one.demo.challenge.level3;
+     import com.fasterxml.jackson.databind.ObjectMapper;
+     import jakarta.annotation.PostConstruct;
+     import lombok.RequiredArgsConstructor;
+     import lombok.extern.slf4j.Slf4j;
+     import org.apache.rocketmq.client.apis.ClientConfiguration;
+     import org.apache.rocketmq.client.apis.ClientException;
+     import org.apache.rocketmq.client.apis.ClientServiceProvider;
+     import org.apache.rocketmq.client.apis.message.Message;
+     … +250 lines (ctrl+o to expand)
+
+⏺ Write(LEVEL3-ANALYSIS.md)
+  ⎿  Wrote 381 lines to LEVEL3-ANALYSIS.md          
+     # Level 3 幂等性问题分析与解决方案
+     ## 📊 你的 Fixed 版本分析
+     ### ✅ 做得好的地方
+     1. **核心思路正确**：意识到需要记录已处理的消息
+     2. **双重检查**：既检查内存缓存，又检查订单状态
+     3. **线程安全考虑**：使用了 `ConcurrentHashMap`
+     … +371 lines (ctrl+o to expand)
+
+⏺ Bash(tree -L 4 sb-mq-producer/src/main/java/one/demo/challenge/level3/)
+  ⎿  sb-mq-producer/src/main/java/one/demo/challenge/level3/
+     ├── AccountService.java
+     ├── AccountServiceIdempotent.java
+     … +10 lines (ctrl+o to expand)
+
+⏺ Write(LEVEL3-QUICK-TEST.md)
+  ⎿  Wrote 275 lines to LEVEL3-QUICK-TEST.md       
+     # Level 3 快速测试指南
+     ## 🎯 测试目标
+     验证三个版本的幂等性处理效果：
+     - **Buggy 版本**：无幂等性保护，必定重复扣款
+     - **Fixed 版本**：你的修复版本，可能有并发问题
+     - **Best 版本**：最佳实践，完全幂等
+     ---
+     … +265 lines (ctrl+o to expand)
+
+⏺ 🎉 Level 3 挑战完成！
+
+  我已经为你创建了完整的幂等性解决方案和详细的分析文档！
+
+  📁 创建的文件清单
+
+  Level 3 核心文件
+
+  sb-mq-producer/src/main/java/one/demo/challenge/level3/
+  ├── AccountService.java                    #
+  原始账户服务（有重复扣款问题）
+  ├── AccountServiceIdempotent.java         # 🆕 幂等版本的账户服务
+  ├── Level3ConsumerBuggy.java              # 有问题的消费者
+  ├── Level3ConsumerFixed.java              # ✅ 你的修复版本
+  ├── Level3ConsumerBest.java               # 🆕 最佳实践版本（三重防护）
+  ├── Level3Producer.java                    # 原始生产者
+  ├── Level3ProducerBest.java               # 🆕
+  最佳实践生产者（含自动化测试）
+  ├── MessageDeduplicationService.java      # 🆕 消息去重服务
+  ├── Order.java                            # 订单实体
+  └── OrderService.java                     # 订单服务
+
+  文档文件
+
+  根目录/
+  ├── CHALLENGES.md                         # 挑战主文档（已更新 Level 3）
+  ├── LEVEL3-ANALYSIS.md                    # 🆕 你的代码详细分析报告
+  └── LEVEL3-QUICK-TEST.md                  # 🆕 快速测试指南
+
+  ---
+  📊 你的 Fixed 版本分析报告
+
+  ✅ 做得好的地方
+
+  1. 思路正确：意识到需要记录已处理的消息
+  2. 双重检查：既检查缓存，又检查订单状态
+  3. 线程安全：使用了 ConcurrentHashMap
+
+  ❌ 存在的问题
+
+  🚨 严重问题 1：并发竞态条件
+
+  // 你的代码（71-86行）
+  if (!CONSUMED_ORDER.containsKey(orderId) && !orderService.isPaid(orderId))
+   {
+      Thread.sleep(100);
+      accountService.deduct(userId, amount, orderId);  // 
+  可能被并发执行多次！
+      CONSUMED_ORDER.put(orderId, true);
+  }
+
+  问题： 检查和更新不是原子操作，两个线程可能同时通过检查，导致重复扣款！
+
+  🚨 严重问题 2：部分失败重复扣款
+
+  accountService.deduct(...);  // ✅ 成功
+  orderService.updateOrderToPaid(...);  // ❌ 这里抛异常
+  CONSUMED_ORDER.put(...);  // 永远不会执行
+
+  扣款成功但没记录，消息重新投递会再次扣款！
+
+  ⚠️ 问题 3：内存存储
+
+  - 应用重启后丢失
+  - 内存无限增长
+  - 分布式环境失效
+
+  ---
+  🎯 Best 版本的三重防护
+
+  防护层 1：消息去重（原子操作）
+
+  if (!deduplicationService.tryProcess(messageId)) {
+      return ConsumeResult.SUCCESS;  // 重复消息，跳过
+  }
+  使用 putIfAbsent 保证原子性，无并发问题！
+
+  防护层 2：业务状态机
+
+  if (orderService.isPaid(orderId)) {
+      return ConsumeResult.SUCCESS;  // 已支付，跳过
+  }
+
+  防护层 3：业务幂等操作
+
+  accountService.deductIdempotent(userId, amount, orderId);
+  // 内部会检查是否已扣款
+
+  ---
+  🧪 快速测试
+
+  测试你的 Fixed 版本
+
+  由于你的 Consumer 使用了不同的 tag，需要先修改生产者或者直接测试 Best
+  版本。
+
+  测试 Best 版本（推荐）
+
+  一键自动化测试：
+  curl "http://localhost:8070/challenge/level3/best/fullTest"
+
+  输出示例：
+  1️⃣ 初始余额: user001 = 1000.00 元
+  2️⃣ 已发送支付消息 - OrderId: ORDER-xxx
+  3️⃣ 第一次扣款后余额: 900.00 元
+  4️⃣ 发送 5 条重复消息...
+  5️⃣ 重复消息处理后余额: 900.00 元
+
+  ✅ 测试通过！余额正确，幂等性保护生效！
+     预期余额: 900.00 元，实际余额: 900.00 元
+
+  ---
+  📚 详细文档
+
+  1. LEVEL3-ANALYSIS.md
+    - 你的代码详细分析
+    - 并发场景图解
+    - 三个版本对比表
+    - 生产环境建议
+  2. LEVEL3-QUICK-TEST.md
+    - 三个版本的测试方法
+    - 并发测试指南
+    - 调试技巧
+    - 验收标准
+
+  ---
+  💡 核心知识点
+
+  1. RocketMQ 的投递语义
+
+  - At Least Once：至少投递一次，可能重复
+  - At Most Once：最多一次，可能丢失
+  - Exactly Once：精确一次（需要自己实现幂等）
+
+  2. 并发问题的根源
+
+  - Check-Then-Act 模式：检查和操作不是原子的
+  - 解决方案：使用原子操作（如 putIfAbsent）
+
+  3. 异常处理策略
+
+  - 业务异常（余额不足）：返回 SUCCESS，不重试
+  - 系统异常（网络超时）：返回 FAILURE，触发重试
+
+  4. 生产环境最佳实践
+
+  - 持久化去重记录（数据库/Redis）
+  - 定期清理过期数据
+  - 多层防护（消息层 + 业务层）
+  - 监控重复消息率
+
+  ---
+  🚀 下一步建议
+
+  1. 阅读详细分析：查看 LEVEL3-ANALYSIS.md
+  2. 运行测试：按照 LEVEL3-QUICK-TEST.md 测试
+  3. 对比学习：比较三个版本的差异
+  4. 理解原理：重点理解原子操作和并发控制
+  5. 改进代码：尝试修复 Fixed 版本的问题
+
+  ---
+  你已经完成了 Level 3 挑战的主要部分！核心思路正确，只需要处理并发细节。
+
+  继续加油！如果有任何问题，随时问我！💪
+
+
+
