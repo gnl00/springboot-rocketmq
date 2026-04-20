@@ -42,14 +42,18 @@ docker run -d --name rocketmq-dashboard --network rocketmq -e "JAVA_OPTS=-Drocke
 为什么会出现消息积压？
 
 - 生产者消息生产太快；
-
 - 消费者消息生产太慢。
 
 遇到消息积压的情况如何解决？
 
+1、配置
 - 消费者本地运行配置修改，例如消费者客户端的线程数，消费并发度等;
-
 - PullConsumer 配置 `pullBatchSize` 自定义每次拉取消息的大小。需要注意：broker.conf 配置文件默认消息拉取大小为 32，所以默认拉取 32 条消息。如果设置了 pullBatchSize 未生效，则可能是 broker.conf 配置文件大小不够大，需要修改配置文件。
+
+2、服务
+- 在“同一个 Consumer Group + 集群消费”前提下，如果该消息积压的 Topic 还有空闲的消息队列未分配给消费者，可以启动更多的消费者来消费消息。
+  默认 8 个队列时，最多同时活跃约 8 个消费者实例，第 9 个及之后实例通常会空闲（分不到队列）。
+- 新启动一个服务，用来做 topic 转发，将未来得及消费的消息转发到一个新的 topic 上，再启动更多的消费者来处理
 
 ## RocketMQMessageListener
 
